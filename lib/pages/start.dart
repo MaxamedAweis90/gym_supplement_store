@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gym_supplement_store/screens/getstarted.dart';
+import 'package:gym_supplement_store/pages/getstarted.dart';
 // import 'login.dart';
 
 class Start extends StatefulWidget {
@@ -16,21 +16,21 @@ class _StartState extends State<Start> {
   final List<Map<String, String>> onboardingData = [
     {
       "image": "assets/images/strong.jpeg",
-      "title": "Jir Adag, Naftaada oo Adag",
+      "title": "Quality Gym Supplements",
       "subtitle":
-          "Ku dadaal jir caafimaad qaba, isbedel nololeed oo xooggan ku samee hagitaan tayo sare leh.",
+          "Discover premium supplements to fuel your fitness journey. From protein powders to pre-workouts, we have everything you need.",
     },
     {
       "image": "assets/images/Product.png",
-      "title": "Horumarkaaga La Soco",
+      "title": "Track Your Progress",
       "subtitle":
-          "Diiwaangeli jimicsiyadaada oo dhiirrigelin joogto ah ka hel horumarkaaga maalin kasta.",
+          "Monitor your supplement intake and track your fitness progress. Get personalized recommendations for your goals.",
     },
     {
       "image": "assets/images/order.jpeg",
-      "title": "Dalbo oo hadda hel",
+      "title": "Order & Get Delivered",
       "subtitle":
-          "Dooro waxa aad rabto, dalbo si fudud, oo hel adeeg degdeg ah Markasta iyo meel kasta.",
+          "Choose your supplements, place orders easily, and get fast delivery anywhere. Quality products at your doorstep.",
     },
   ];
 

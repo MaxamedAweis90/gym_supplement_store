@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "94229908832",
+    "project_id": "supplementstore-63c82",
+    "storage_bucket": "supplementstore-63c82.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:94229908832:android:5fbc9e27a37f267cb32205",
+        "android_client_info": {
+          "package_name": "com.example.gym_supplement_store"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAABryRj9QvGmiiw7S8m3FweV8jnREsRl0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
