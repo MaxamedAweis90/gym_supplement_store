@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:gym_supplement_store/widgets/image_picker_widget.dart';
+import 'package:gym_supplement_store/service/supabase_config.dart';
+import 'dart:io';
 
 class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key});
@@ -20,16 +21,12 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
   }
 
   Future<void> _loadProducts() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('products')
           .orderBy('createdAt', descending: true)
           .get();
-
       setState(() {
         _products = querySnapshot.docs
             .map((doc) => {'id': doc.id, ...doc.data()})
@@ -37,9 +34,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -51,17 +46,18 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
     }
   }
 
-  Future<void> _deleteProduct(String productId) async {
+  Future<void> _deleteProduct(String productId, {String? imageUrl}) async {
     try {
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        await SupabaseConfig.deleteImage(imageUrl: imageUrl);
+      }
       await FirebaseFirestore.instance
           .collection('products')
           .doc(productId)
           .delete();
-
       setState(() {
         _products.removeWhere((product) => product['id'] == productId);
       });
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -74,7 +70,9 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting product: $e'),
+            content: Text(
+              'Error deleting product: If the image was already deleted, this is safe to ignore. $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -85,27 +83,24 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'Products Management',
           style: theme.textTheme.headlineSmall?.copyWith(
-            color: theme.colorScheme.onBackground,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.add, color: theme.colorScheme.onBackground),
-            onPressed: () {
-              _showAddProductDialog(context);
-            },
+            icon: Icon(Icons.add, color: theme.colorScheme.onSurface),
+            onPressed: () => _showAddProductDialog(context),
           ),
           IconButton(
-            icon: Icon(Icons.refresh, color: theme.colorScheme.onBackground),
+            icon: Icon(Icons.refresh, color: theme.colorScheme.onSurface),
             onPressed: _loadProducts,
           ),
         ],
@@ -124,7 +119,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -140,14 +134,12 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
           Text(
             'Start by adding your first product',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onBackground.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
-            onPressed: () {
-              _showAddProductDialog(context);
-            },
+            onPressed: () => _showAddProductDialog(context),
             icon: const Icon(Icons.add),
             label: const Text('Add First Product'),
             style: ElevatedButton.styleFrom(
@@ -162,7 +154,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
 
   Widget _buildProductsList(BuildContext context) {
     final theme = Theme.of(context);
-
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _products.length,
@@ -178,7 +169,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                 color: theme.colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: product['imageUrl'] != null
+              child: product['imageUrl'] != null && product['imageUrl'] != ''
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
@@ -310,7 +301,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                     ],
                   ),
                 ),
-
                 // Content
                 Flexible(
                   child: SingleChildScrollView(
@@ -357,54 +347,12 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // Simple image picker without the complex widget
-                        Container(
-                          width: 350,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: theme.colorScheme.outline.withOpacity(0.3),
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: InkWell(
-                            onTap: () {
-                              // Simple image selection
-                              setState(() {
-                                selectedImageUrl =
-                                    'https://via.placeholder.com/400x300?text=Product+Image';
-                              });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Image placeholder added'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            },
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_a_photo,
-                                  size: 48,
-                                  color: theme.colorScheme.primary.withOpacity(
-                                    0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Tap to add image',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        AdminProductImagePicker(
+                          initialImageUrl: selectedImageUrl,
+                          onImageChanged: (url) {
+                            setState(() => selectedImageUrl = url);
+                          },
                         ),
-
                         const SizedBox(height: 16),
                         Row(
                           children: [
@@ -435,7 +383,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                     ),
                   ),
                 ),
-
                 // Actions
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -464,7 +411,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                             );
                             return;
                           }
-
                           if (categoryController.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -473,7 +419,15 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                             );
                             return;
                           }
-
+                          if (selectedImageUrl == null ||
+                              selectedImageUrl?.isEmpty == true) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Product image is required'),
+                              ),
+                            );
+                            return;
+                          }
                           try {
                             await FirebaseFirestore.instance
                                 .collection('products')
@@ -490,10 +444,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                   'discount': discount,
                                   'createdAt': FieldValue.serverTimestamp(),
                                 });
-
                             Navigator.of(context).pop();
                             _loadProducts();
-
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -585,7 +537,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                     ],
                   ),
                 ),
-
                 // Content
                 Flexible(
                   child: SingleChildScrollView(
@@ -632,53 +583,12 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // Simple image picker
-                        Container(
-                          width: 350,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: theme.colorScheme.outline.withOpacity(0.3),
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                selectedImageUrl =
-                                    'https://via.placeholder.com/400x300?text=Product+Image';
-                              });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Image placeholder added'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            },
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_a_photo,
-                                  size: 48,
-                                  color: theme.colorScheme.primary.withOpacity(
-                                    0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Tap to change image',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        AdminProductImagePicker(
+                          initialImageUrl: selectedImageUrl,
+                          onImageChanged: (url) {
+                            setState(() => selectedImageUrl = url);
+                          },
                         ),
-
                         const SizedBox(height: 16),
                         Row(
                           children: [
@@ -712,7 +622,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                     ),
                   ),
                 ),
-
                 // Actions
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -741,7 +650,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                             );
                             return;
                           }
-
                           if (categoryController.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -750,7 +658,15 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                             );
                             return;
                           }
-
+                          if (selectedImageUrl == null ||
+                              selectedImageUrl?.isEmpty == true) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Product image is required'),
+                              ),
+                            );
+                            return;
+                          }
                           try {
                             await FirebaseFirestore.instance
                                 .collection('products')
@@ -768,10 +684,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                   'discount': discount,
                                   'updatedAt': FieldValue.serverTimestamp(),
                                 });
-
                             Navigator.of(context).pop();
                             _loadProducts();
-
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -809,7 +723,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
     Map<String, dynamic> product,
   ) {
     final theme = Theme.of(context);
-
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -829,7 +742,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Are you sure you want to delete "${product['name']}"?',
+                'Are you sure you want to delete \"${product['name']}\"?',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium,
               ),
@@ -845,7 +758,10 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                   ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      _deleteProduct(product['id']);
+                      _deleteProduct(
+                        product['id'],
+                        imageUrl: product['imageUrl'],
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
@@ -859,6 +775,184 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Reusable widget for picking/uploading/removing product images in admin dialogs
+class AdminProductImagePicker extends StatefulWidget {
+  final String? initialImageUrl;
+  final void Function(String? imageUrl) onImageChanged;
+
+  const AdminProductImagePicker({
+    super.key,
+    this.initialImageUrl,
+    required this.onImageChanged,
+  });
+
+  @override
+  State<AdminProductImagePicker> createState() =>
+      _AdminProductImagePickerState();
+}
+
+class _AdminProductImagePickerState extends State<AdminProductImagePicker> {
+  String? _imageUrl;
+  File? _imageFile;
+  bool _isUploading = false;
+  String? _oldImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageUrl = widget.initialImageUrl;
+    _oldImageUrl = widget.initialImageUrl;
+  }
+
+  Future<void> _pickImage() async {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Pick from Gallery'),
+              onTap: () async {
+                Navigator.of(context).pop();
+                await _handlePick(SupabaseConfig.pickImageFromGallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a Photo'),
+              onTap: () async {
+                Navigator.of(context).pop();
+                await _handlePick(SupabaseConfig.takePhotoWithCamera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handlePick(Future<File?> Function() pickFn) async {
+    setState(() => _isUploading = true);
+    final file = await pickFn();
+    if (file != null) {
+      final url = await SupabaseConfig.uploadImage(
+        imageFile: file,
+        bucketName: 'product-images',
+      );
+      if (url != null) {
+        // Delete old image if it exists and is different
+        if (_imageUrl != null && _imageUrl != url) {
+          await SupabaseConfig.deleteImage(imageUrl: _imageUrl!);
+        }
+        setState(() {
+          _imageFile = file;
+          _imageUrl = url;
+        });
+        widget.onImageChanged(url);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image uploaded successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to upload image.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+    setState(() => _isUploading = false);
+  }
+
+  void _removeImage() async {
+    // Delete old image if it exists
+    if (_imageUrl != null) {
+      await SupabaseConfig.deleteImage(imageUrl: _imageUrl!);
+    }
+    setState(() {
+      _imageFile = null;
+      _imageUrl = null;
+    });
+    widget.onImageChanged(null);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Image removed'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: 350,
+      height: 150,
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.3),
+          width: 2,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: _isUploading
+          ? const Center(child: CircularProgressIndicator())
+          : _imageUrl != null
+          ? Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(_imageUrl!, fit: BoxFit.cover),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.red),
+                      onPressed: _removeImage,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : InkWell(
+              onTap: _pickImage,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add_a_photo,
+                    size: 48,
+                    color: theme.colorScheme.primary.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap to add image',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }

@@ -79,7 +79,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
           });
         }
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException {
       setState(() {
         _isLoading = false;
         _error = "Invalid email or password.";
@@ -98,18 +98,18 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.surface,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: theme.colorScheme.onBackground),
+            icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
             'Admin Login',
             style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onBackground,
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ),
@@ -146,7 +146,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   Text(
                     "Please sign in with admin credentials.",
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onBackground.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -260,7 +260,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                     child: Text(
                       "⚠️ Admin access only",
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onBackground.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ),

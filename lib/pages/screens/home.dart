@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gym_supplement_store/pages/screens/hot_products_screen.dart';
 import 'package:gym_supplement_store/pages/screens/latest_products_screen.dart';
+import 'package:gym_supplement_store/widgets/product_card.dart';
 
 class HomeTap extends StatefulWidget {
   const HomeTap({super.key});
@@ -183,7 +184,7 @@ class _HomeTapState extends State<HomeTap> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -224,7 +225,7 @@ class _HomeTapState extends State<HomeTap> {
                   _greeting,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w300,
-                    color: theme.colorScheme.onBackground.withOpacity(0.8),
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -232,7 +233,7 @@ class _HomeTapState extends State<HomeTap> {
                   _userName,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onBackground,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -458,7 +459,81 @@ class _HomeTapState extends State<HomeTap> {
                   itemCount: _hotProducts.length,
                   itemBuilder: (context, index) {
                     final product = _hotProducts[index];
-                    return _buildProductCard(context, product, true);
+                    final double price =
+                        (product['price'] as num?)?.toDouble() ?? 0.0;
+                    final int? discount = product['discount'] as int?;
+                    final double? discountPrice = (discount != null)
+                        ? (price * (1 - discount / 100))
+                        : null;
+                    return Container(
+                      width: 220,
+                      margin: const EdgeInsets.only(right: 16),
+                      child: Stack(
+                        children: [
+                          ProductCard(
+                            imageUrl: product['imageUrl'] ?? '',
+                            name: product['name'] ?? '',
+                            description: product['category'] ?? '',
+                            price: price,
+                            discountPrice: discountPrice,
+                            onAddToCart: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '${product['name']} added to cart!',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          // HOT badge
+                          Positioned(
+                            top: 12,
+                            left: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'HOT',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Discount badge
+                          if (discount != null)
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '-$discount%',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
                   },
                 ),
               ),
@@ -540,162 +615,85 @@ class _HomeTapState extends State<HomeTap> {
                   itemCount: _latestProducts.length,
                   itemBuilder: (context, index) {
                     final product = _latestProducts[index];
-                    return _buildProductCard(context, product, false);
+                    final double price =
+                        (product['price'] as num?)?.toDouble() ?? 0.0;
+                    final int? discount = product['discount'] as int?;
+                    final double? discountPrice = (discount != null)
+                        ? (price * (1 - discount / 100))
+                        : null;
+                    return Container(
+                      width: 220,
+                      margin: const EdgeInsets.only(right: 16),
+                      child: Stack(
+                        children: [
+                          ProductCard(
+                            imageUrl: product['imageUrl'] ?? '',
+                            name: product['name'] ?? '',
+                            description: product['category'] ?? '',
+                            price: price,
+                            discountPrice: discountPrice,
+                            onAddToCart: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '${product['name']} added to cart!',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          // NEW badge
+                          Positioned(
+                            top: 12,
+                            left: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'NEW',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Discount badge
+                          if (discount != null)
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '-$discount%',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
                   },
                 ),
               ),
       ],
-    );
-  }
-
-  Widget _buildProductCard(
-    BuildContext context,
-    Map<String, dynamic> product,
-    bool isHot,
-  ) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: 200,
-      margin: const EdgeInsets.only(right: 16),
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  child: Image.network(
-                    product['imageUrl'],
-                    height: 150,
-                    width: 200,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 150,
-                        width: 200,
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: theme.colorScheme.primary,
-                          size: 40,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                if (isHot)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'HOT',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                if (product['discount'] != null)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '-${product['discount']}%',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product['name'],
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product['category'],
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '\$${product['price']}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          // TODO: Add to cart functionality
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                '${product['name']} added to cart!',
-                              ),
-                            ),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.add_shopping_cart,
-                          color: theme.colorScheme.primary,
-                          size: 20,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary
-                              .withOpacity(0.1),
-                          minimumSize: const Size(36, 36),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

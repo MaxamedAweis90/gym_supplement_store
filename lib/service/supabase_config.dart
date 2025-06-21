@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 
 class SupabaseConfig {
-  // Replace these with your actual Supabase credentials
+  /// Default bucket for product images
+  static const String defaultBucket = 'product-images';
+
   static const String supabaseUrl = 'https://rokozthjllfouacooeul.supabase.co';
   static const String supabaseAnonKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJva296dGhqbGxmb3VhY29vZXVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MjczNjIsImV4cCI6MjA2NjAwMzM2Mn0.lkbY8Erj3cO3X0i_GhFmOED-WiptA3OB5z2UcKIanMI';
@@ -15,26 +17,26 @@ class SupabaseConfig {
     await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   }
 
-  // Upload image to Supabase Storage
+  /// Upload image to Supabase Storage (default bucket: product-images)
   static Future<String?> uploadImage({
     required File imageFile,
-    required String bucketName,
+    String? bucketName,
     String? fileName,
   }) async {
     try {
+      final String bucket = bucketName ?? defaultBucket;
       final finalFileName =
           fileName ??
           '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
 
       final response = await client.storage
-          .from(bucketName)
+          .from(bucket)
           .upload(finalFileName, imageFile);
 
       if (response.isNotEmpty) {
         final imageUrl = client.storage
-            .from(bucketName)
+            .from(bucket)
             .getPublicUrl(finalFileName);
-
         return imageUrl;
       }
       return null;
@@ -44,16 +46,15 @@ class SupabaseConfig {
     }
   }
 
-  // Delete image from Supabase Storage
+  /// Delete image from Supabase Storage by full URL
   static Future<bool> deleteImage({
     required String imageUrl,
-    required String bucketName,
+    String? bucketName,
   }) async {
     try {
+      final String bucket = bucketName ?? defaultBucket;
       final fileName = imageUrl.split('/').last;
-
-      await client.storage.from(bucketName).remove([fileName]);
-
+      await client.storage.from(bucket).remove([fileName]);
       return true;
     } catch (e) {
       print('Error deleting image: $e');
@@ -61,7 +62,22 @@ class SupabaseConfig {
     }
   }
 
-  // Pick image from gallery
+  /// Delete image from Supabase Storage by path (relative to bucket)
+  static Future<bool> deleteImageByPath({
+    required String imagePath,
+    String? bucketName,
+  }) async {
+    try {
+      final String bucket = bucketName ?? defaultBucket;
+      await client.storage.from(bucket).remove([imagePath]);
+      return true;
+    } catch (e) {
+      print('Error deleting image by path: $e');
+      return false;
+    }
+  }
+
+  /// Pick image from gallery
   static Future<File?> pickImageFromGallery() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -71,7 +87,6 @@ class SupabaseConfig {
         maxHeight: 1024,
         imageQuality: 85,
       );
-
       if (image != null) {
         return File(image.path);
       }
@@ -82,7 +97,7 @@ class SupabaseConfig {
     }
   }
 
-  // Take photo with camera
+  /// Take photo with camera
   static Future<File?> takePhotoWithCamera() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -92,7 +107,6 @@ class SupabaseConfig {
         maxHeight: 1024,
         imageQuality: 85,
       );
-
       if (image != null) {
         return File(image.path);
       }
@@ -103,14 +117,13 @@ class SupabaseConfig {
     }
   }
 
-  // Pick file (for any type of file)
+  /// Pick file (for any type of file)
   static Future<File?> pickFile({List<String>? allowedExtensions}) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: allowedExtensions ?? ['jpg', 'jpeg', 'png', 'webp'],
       );
-
       if (result != null) {
         return File(result.files.single.path!);
       }
@@ -121,28 +134,26 @@ class SupabaseConfig {
     }
   }
 
-  // Get image URL with transformations
+  /// Get image URL with transformations (default bucket: product-images)
   static String getImageUrl({
     required String imagePath,
     int? width,
     int? height,
     String? format,
+    String? bucketName,
   }) {
-    String url = client.storage.from('product-images').getPublicUrl(imagePath);
-
+    final String bucket = bucketName ?? defaultBucket;
+    String url = client.storage.from(bucket).getPublicUrl(imagePath);
     // Add transformations if specified
     if (width != null || height != null || format != null) {
       final transformations = <String>[];
-
       if (width != null) transformations.add('width=$width');
       if (height != null) transformations.add('height=$height');
       if (format != null) transformations.add('format=$format');
-
       if (transformations.isNotEmpty) {
         url += '?${transformations.join('&')}';
       }
     }
-
     return url;
   }
 }

@@ -26,7 +26,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: _adminPages[_currentIndex],
       bottomNavigationBar: AdminBottomNav(
         currentIndex: _currentIndex,
@@ -50,24 +50,22 @@ class AdminHomeTab extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'Admin Dashboard',
           style: theme.textTheme.headlineSmall?.copyWith(
-            color: theme.colorScheme.onBackground,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.logout, color: theme.colorScheme.onBackground),
+            icon: Icon(Icons.logout, color: theme.colorScheme.onSurface),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
-              if (context.mounted) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              }
+              // The AuthWrapper will automatically handle the navigation
             },
           ),
         ],

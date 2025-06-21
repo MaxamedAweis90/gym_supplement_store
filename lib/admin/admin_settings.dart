@@ -87,12 +87,12 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'Admin Settings',
           style: theme.textTheme.headlineSmall?.copyWith(
-            color: theme.colorScheme.onBackground,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -296,11 +296,7 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         await FirebaseAuth.instance.signOut();
-                        if (context.mounted) {
-                          Navigator.of(
-                            context,
-                          ).popUntil((route) => route.isFirst);
-                        }
+                        // The AuthWrapper will automatically handle the navigation
                       },
                       icon: const Icon(Icons.logout),
                       label: const Text('Logout'),

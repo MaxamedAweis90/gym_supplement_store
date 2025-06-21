@@ -166,7 +166,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.surface,
         body: Center(
           child: SingleChildScrollView(
             child: Container(
@@ -179,7 +179,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   Center(
                     child: Image.asset(
                       'assets/images/register.png',
-                      height: 220,
+                      height: 200,
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -194,7 +194,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   Text(
                     "Please register to continue.",
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onBackground.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(height: 25),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:gym_supplement_store/pages/start.dart';
+import 'package:gym_supplement_store/pages/Homepage.dart';
 import 'package:gym_supplement_store/providers/theme_provider.dart';
 import 'package:gym_supplement_store/service/supabase_config.dart';
 
@@ -31,7 +33,7 @@ class MyApp extends StatelessWidget {
             theme: _buildLightTheme(),
             darkTheme: _buildDarkTheme(),
             themeMode: themeProvider.themeMode,
-            home: Start(),
+            home: const AuthWrapper(),
           );
         },
       ),
@@ -291,6 +293,34 @@ class MyApp extends StatelessWidget {
 
       // Icon Theme
       iconTheme: const IconThemeData(color: Colors.white, size: 24),
+    );
+  }
+}
+
+// Authentication wrapper to handle auth state
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        // Show loading while checking auth state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // If user is authenticated, show main app
+        if (snapshot.hasData && snapshot.data != null) {
+          return const HomePage();
+        }
+
+        // If user is not authenticated, show onboarding/start screen
+        return const Start();
+      },
     );
   }
 }
