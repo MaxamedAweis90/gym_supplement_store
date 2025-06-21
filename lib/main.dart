@@ -4,10 +4,15 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:gym_supplement_store/pages/start.dart';
 import 'package:gym_supplement_store/providers/theme_provider.dart';
+import 'package:gym_supplement_store/service/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Supabase (uncomment when you have your credentials)
+  await SupabaseConfig.initialize();
+
   runApp(const MyApp());
 }
 

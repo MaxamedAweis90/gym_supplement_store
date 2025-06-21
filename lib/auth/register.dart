@@ -160,11 +160,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final double screenWidth = MediaQuery.of(context).size.width;
     final double formWidth = screenWidth < 500 ? screenWidth * 0.95 : 400;
 
     return SafeArea(
       child: Scaffold(
+        backgroundColor: theme.colorScheme.background,
         body: Center(
           child: SingleChildScrollView(
             child: Container(
@@ -176,108 +178,164 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   Center(
                     child: Image.asset(
-                      'assets/images/register.jpg',
-                      height: 200,
+                      'assets/images/register.png',
+                      height: 220,
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
+                  const SizedBox(height: 5),
+                  Text(
                     "Register",
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 5),
-                  const Text(
+                  Text(
                     "Please register to continue.",
-                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onBackground.withOpacity(0.7),
+                    ),
                   ),
                   const SizedBox(height: 25),
                   TextField(
                     controller: _usernameController,
+                    style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.person_outline),
+                      prefixIcon: Icon(
+                        Icons.person_outline,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                       hintText: "Username",
+                      hintStyle: TextStyle(
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: theme.colorScheme.surface,
                     ),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _emailController,
+                    style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.email_outlined),
+                      prefixIcon: Icon(
+                        Icons.email_outlined,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                       hintText: "Email",
+                      hintStyle: TextStyle(
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: theme.colorScheme.surface,
                     ),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
+                    style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.lock_outline),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                       hintText: "Password",
+                      hintStyle: TextStyle(
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       filled: true,
-                      fillColor: Colors.grey[100],
-                      suffixIcon: const Icon(Icons.visibility_off_outlined),
+                      fillColor: theme.colorScheme.surface,
+                      suffixIcon: Icon(
+                        Icons.visibility_off_outlined,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _confirmPasswordController,
                     obscureText: true,
+                    style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.lock_outline),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                       hintText: "Confirm Password",
+                      hintStyle: TextStyle(
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       filled: true,
-                      fillColor: Colors.grey[100],
-                      suffixIcon: const Icon(Icons.visibility_off_outlined),
+                      fillColor: theme.colorScheme.surface,
+                      suffixIcon: Icon(
+                        Icons.visibility_off_outlined,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 5),
                   Row(
                     children: [
-                      Checkbox(value: false, onChanged: (_) {}),
-                      const Text("Remind me next time"),
+                      Checkbox(
+                        value: false,
+                        onChanged: (_) {},
+                        activeColor: theme.colorScheme.primary,
+                      ),
+                      Text(
+                        "Remind me next time",
+                        style: theme.textTheme.bodyMedium,
+                      ),
                     ],
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 5),
-                    Text(_error!, style: const TextStyle(color: Colors.red)),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 10),
                   if (_isLoading)
-                    const Center(child: CircularProgressIndicator())
+                    Center(
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
+                      ),
+                    )
                   else ...[
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _handleRegister,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black87,
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           "Sign Up",
-                          style: TextStyle(
-                            fontSize: 18,
+                          style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onPrimary,
                           ),
                         ),
                       ),
@@ -291,11 +349,16 @@ class _RegisterPageState extends State<RegisterPage> {
                           'assets/images/google.png',
                           height: 24,
                         ),
-                        label: const Text('Sign Up with Google'),
+                        label: Text(
+                          'Sign Up with Google',
+                          style: theme.textTheme.titleMedium,
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          side: const BorderSide(color: Colors.black12),
+                          backgroundColor: theme.colorScheme.surface,
+                          foregroundColor: theme.colorScheme.onSurface,
+                          side: BorderSide(
+                            color: theme.colorScheme.outline.withOpacity(0.3),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
@@ -311,7 +374,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           );
                         },
-                        child: const Text("Already have an account? Sign in"),
+                        child: Text(
+                          "Already have an account? Sign in",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
                       ),
                     ),
                   ],
