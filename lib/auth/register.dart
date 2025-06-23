@@ -3,7 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:fluttertoast/fluttertoast.dart'; // ✅ Import
+import 'package:provider/provider.dart';
 import 'package:gym_supplement_store/auth/login.dart';
+import 'package:gym_supplement_store/providers/user_provider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -71,8 +73,15 @@ class _RegisterPageState extends State<RegisterPage> {
           .set({
             'username': username,
             'email': email,
+            'avatarUrl': null,
             'createdAt': FieldValue.serverTimestamp(),
           });
+
+      // Initialize user data after successful registration
+      await Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).initializeUserData();
 
       setState(() => _isLoading = false);
       print("✅ Registration successful");
@@ -128,8 +137,15 @@ class _RegisterPageState extends State<RegisterPage> {
             .set({
               'username': googleUser.displayName ?? '',
               'email': googleUser.email,
+              'avatarUrl': null,
               'createdAt': FieldValue.serverTimestamp(),
             });
+
+        // Initialize user data after successful registration
+        await Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).initializeUserData();
       }
 
       setState(() => _isLoading = false);

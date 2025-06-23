@@ -201,12 +201,32 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '\$${product['price']?.toString() ?? '0.00'}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      '\$${product['price']?.toString() ?? '0.00'}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Rating Display
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.star, size: 14, color: Colors.amber),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${product['rating']?.toString() ?? '4.5'}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -253,9 +273,18 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
     final descriptionController = TextEditingController();
     final priceController = TextEditingController();
     final categoryController = TextEditingController();
-    bool isHot = false;
+    final ratingController = TextEditingController(text: '4.5');
     int? discount;
     String? selectedImageUrl;
+    DateTime? discountStartDate;
+    DateTime? discountEndDate;
+    final supplementTypeController = TextEditingController();
+    final ingredientsController = TextEditingController();
+    final servingSizeController = TextEditingController();
+    final flavorsController = TextEditingController();
+    final usageController = TextEditingController();
+    final warningsController = TextEditingController();
+    final nutritionFactsController = TextEditingController();
 
     showDialog(
       context: context,
@@ -295,7 +324,22 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          // Dispose controllers before closing
+                          nameController.dispose();
+                          descriptionController.dispose();
+                          priceController.dispose();
+                          categoryController.dispose();
+                          ratingController.dispose();
+                          supplementTypeController.dispose();
+                          ingredientsController.dispose();
+                          servingSizeController.dispose();
+                          flavorsController.dispose();
+                          usageController.dispose();
+                          warningsController.dispose();
+                          nutritionFactsController.dispose();
+                          Navigator.of(context).pop();
+                        },
                         icon: const Icon(Icons.close, color: Colors.white),
                       ),
                     ],
@@ -347,25 +391,24 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
+                        TextField(
+                          controller: ratingController,
+                          keyboardType: TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Rating (0.0 - 5.0)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.star),
+                            hintText: '4.5',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         AdminProductImagePicker(
                           initialImageUrl: selectedImageUrl,
                           onImageChanged: (url) {
                             setState(() => selectedImageUrl = url);
                           },
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: isHot,
-                              onChanged: (value) {
-                                setState(() {
-                                  isHot = value ?? false;
-                                });
-                              },
-                            ),
-                            const Text('Mark as Hot Product'),
-                          ],
                         ),
                         const SizedBox(height: 16),
                         TextField(
@@ -378,6 +421,145 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                           onChanged: (value) {
                             discount = int.tryParse(value);
                           },
+                        ),
+                        const SizedBox(height: 16),
+                        // Discount Date Fields
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                readOnly: true,
+                                controller: TextEditingController(
+                                  text: discountStartDate != null
+                                      ? '${discountStartDate!.day}/${discountStartDate!.month}/${discountStartDate!.year}'
+                                      : 'Select Start Date',
+                                ),
+                                decoration: const InputDecoration(
+                                  labelText: 'Discount Start Date',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.calendar_today),
+                                ),
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(
+                                      const Duration(days: 365),
+                                    ),
+                                  );
+                                  if (date != null) {
+                                    setState(() {
+                                      discountStartDate = date;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                readOnly: true,
+                                controller: TextEditingController(
+                                  text: discountEndDate != null
+                                      ? '${discountEndDate!.day}/${discountEndDate!.month}/${discountEndDate!.year}'
+                                      : 'Select End Date',
+                                ),
+                                decoration: const InputDecoration(
+                                  labelText: 'Discount End Date',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.calendar_today),
+                                ),
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now().add(
+                                      const Duration(days: 10),
+                                    ),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(
+                                      const Duration(days: 365),
+                                    ),
+                                  );
+                                  if (date != null) {
+                                    setState(() {
+                                      discountEndDate = date;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: supplementTypeController,
+                          decoration: const InputDecoration(
+                            labelText: 'Supplement Type (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.category),
+                            hintText: 'e.g. Protein, Pre-Workout, Multivitamin',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: ingredientsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Ingredients (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.science),
+                            hintText: 'e.g. Whey, Creatine, BCAAs',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: servingSizeController,
+                          decoration: const InputDecoration(
+                            labelText: 'Serving Size (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.local_drink),
+                            hintText: 'e.g. 30g, 1 scoop',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: flavorsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Flavors (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.icecream),
+                            hintText: 'e.g. Chocolate, Vanilla',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: usageController,
+                          decoration: const InputDecoration(
+                            labelText: 'Usage (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.fitness_center),
+                            hintText: 'e.g. Take 1 scoop post-workout',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: warningsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Warnings (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.warning),
+                            hintText: 'e.g. Not for children',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: nutritionFactsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nutrition Facts (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.fact_check),
+                            hintText: 'e.g. Protein: 24g, Carbs: 3g',
+                          ),
                         ),
                       ],
                     ),
@@ -397,7 +579,22 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          // Dispose controllers before closing
+                          nameController.dispose();
+                          descriptionController.dispose();
+                          priceController.dispose();
+                          categoryController.dispose();
+                          ratingController.dispose();
+                          supplementTypeController.dispose();
+                          ingredientsController.dispose();
+                          servingSizeController.dispose();
+                          flavorsController.dispose();
+                          usageController.dispose();
+                          warningsController.dispose();
+                          nutritionFactsController.dispose();
+                          Navigator.of(context).pop();
+                        },
                         child: const Text('Cancel'),
                       ),
                       const SizedBox(width: 12),
@@ -428,22 +625,97 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                             );
                             return;
                           }
+
+                          // Validate rating
+                          final rating = double.tryParse(ratingController.text);
+                          if (rating == null || rating < 0 || rating > 5) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Rating must be between 0.0 and 5.0',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Validate discount dates if discount is set
+                          if (discount != null && discount! > 0) {
+                            if (discountStartDate == null ||
+                                discountEndDate == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please select both start and end dates for discount',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            if (discountEndDate!.isBefore(discountStartDate!)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'End date must be after start date',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
                           try {
+                            final price =
+                                double.tryParse(priceController.text) ?? 0.0;
+                            double? discountPrice;
+
+                            // Calculate discount price if discount is set
+                            if (discount != null && discount! > 0) {
+                              discountPrice = price * (1 - discount! / 100);
+                            }
+
                             await FirebaseFirestore.instance
                                 .collection('products')
                                 .add({
                                   'name': nameController.text.trim(),
                                   'description': descriptionController.text
                                       .trim(),
-                                  'price':
-                                      double.tryParse(priceController.text) ??
-                                      0.0,
+                                  'price': price,
                                   'category': categoryController.text.trim(),
+                                  'rating': rating,
                                   'imageUrl': selectedImageUrl,
-                                  'isHot': isHot,
                                   'discount': discount,
+                                  'discountPrice': discountPrice,
+                                  'discountStartDate': discountStartDate,
+                                  'discountEndDate': discountEndDate,
+                                  'supplementType': supplementTypeController
+                                      .text
+                                      .trim(),
+                                  'ingredients': ingredientsController.text
+                                      .trim(),
+                                  'servingSize': servingSizeController.text
+                                      .trim(),
+                                  'flavors': flavorsController.text.trim(),
+                                  'usage': usageController.text.trim(),
+                                  'warnings': warningsController.text.trim(),
+                                  'nutritionFacts': nutritionFactsController
+                                      .text
+                                      .trim(),
                                   'createdAt': FieldValue.serverTimestamp(),
                                 });
+                            // Dispose controllers before closing
+                            nameController.dispose();
+                            descriptionController.dispose();
+                            priceController.dispose();
+                            categoryController.dispose();
+                            ratingController.dispose();
+                            supplementTypeController.dispose();
+                            ingredientsController.dispose();
+                            servingSizeController.dispose();
+                            flavorsController.dispose();
+                            usageController.dispose();
+                            warningsController.dispose();
+                            nutritionFactsController.dispose();
                             Navigator.of(context).pop();
                             _loadProducts();
                             if (mounted) {
@@ -493,9 +765,35 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
     final categoryController = TextEditingController(
       text: product['category'] ?? '',
     );
-    bool isHot = product['isHot'] ?? false;
+    final discountController = TextEditingController(
+      text: product['discount']?.toString() ?? '',
+    );
+    final ratingController = TextEditingController(
+      text: product['rating']?.toString() ?? '4.5',
+    );
     int? discount = product['discount'];
     String? selectedImageUrl = product['imageUrl'];
+    DateTime? discountStartDate = product['discountStartDate']?.toDate();
+    DateTime? discountEndDate = product['discountEndDate']?.toDate();
+    final supplementTypeController = TextEditingController(
+      text: product['supplementType'] ?? '',
+    );
+    final ingredientsController = TextEditingController(
+      text: product['ingredients'] ?? '',
+    );
+    final servingSizeController = TextEditingController(
+      text: product['servingSize'] ?? '',
+    );
+    final flavorsController = TextEditingController(
+      text: product['flavors'] ?? '',
+    );
+    final usageController = TextEditingController(text: product['usage'] ?? '');
+    final warningsController = TextEditingController(
+      text: product['warnings'] ?? '',
+    );
+    final nutritionFactsController = TextEditingController(
+      text: product['nutritionFacts'] ?? '',
+    );
 
     showDialog(
       context: context,
@@ -531,7 +829,23 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          // Dispose controllers before closing
+                          nameController.dispose();
+                          descriptionController.dispose();
+                          priceController.dispose();
+                          categoryController.dispose();
+                          discountController.dispose();
+                          ratingController.dispose();
+                          supplementTypeController.dispose();
+                          ingredientsController.dispose();
+                          servingSizeController.dispose();
+                          flavorsController.dispose();
+                          usageController.dispose();
+                          warningsController.dispose();
+                          nutritionFactsController.dispose();
+                          Navigator.of(context).pop();
+                        },
                         icon: const Icon(Icons.close, color: Colors.white),
                       ),
                     ],
@@ -583,25 +897,24 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
+                        TextField(
+                          controller: ratingController,
+                          keyboardType: TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Rating (0.0 - 5.0)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.star),
+                            hintText: '4.5',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         AdminProductImagePicker(
                           initialImageUrl: selectedImageUrl,
                           onImageChanged: (url) {
                             setState(() => selectedImageUrl = url);
                           },
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: isHot,
-                              onChanged: (value) {
-                                setState(() {
-                                  isHot = value ?? false;
-                                });
-                              },
-                            ),
-                            const Text('Mark as Hot Product'),
-                          ],
                         ),
                         const SizedBox(height: 16),
                         TextField(
@@ -611,12 +924,152 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.discount),
                           ),
-                          controller: TextEditingController(
-                            text: discount?.toString() ?? '',
-                          ),
+                          controller: discountController,
                           onChanged: (value) {
                             discount = int.tryParse(value);
                           },
+                        ),
+                        const SizedBox(height: 16),
+                        // Discount Date Fields
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                readOnly: true,
+                                controller: TextEditingController(
+                                  text: discountStartDate != null
+                                      ? '${discountStartDate!.day}/${discountStartDate!.month}/${discountStartDate!.year}'
+                                      : 'Select Start Date',
+                                ),
+                                decoration: const InputDecoration(
+                                  labelText: 'Discount Start Date',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.calendar_today),
+                                ),
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate:
+                                        discountStartDate ?? DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(
+                                      const Duration(days: 365),
+                                    ),
+                                  );
+                                  if (date != null) {
+                                    setState(() {
+                                      discountStartDate = date;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                readOnly: true,
+                                controller: TextEditingController(
+                                  text: discountEndDate != null
+                                      ? '${discountEndDate!.day}/${discountEndDate!.month}/${discountEndDate!.year}'
+                                      : 'Select End Date',
+                                ),
+                                decoration: const InputDecoration(
+                                  labelText: 'Discount End Date',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.calendar_today),
+                                ),
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate:
+                                        discountEndDate ??
+                                        DateTime.now().add(
+                                          const Duration(days: 10),
+                                        ),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(
+                                      const Duration(days: 365),
+                                    ),
+                                  );
+                                  if (date != null) {
+                                    setState(() {
+                                      discountEndDate = date;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: supplementTypeController,
+                          decoration: const InputDecoration(
+                            labelText: 'Supplement Type (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.category),
+                            hintText: 'e.g. Protein, Pre-Workout, Multivitamin',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: ingredientsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Ingredients (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.science),
+                            hintText: 'e.g. Whey, Creatine, BCAAs',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: servingSizeController,
+                          decoration: const InputDecoration(
+                            labelText: 'Serving Size (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.local_drink),
+                            hintText: 'e.g. 30g, 1 scoop',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: flavorsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Flavors (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.icecream),
+                            hintText: 'e.g. Chocolate, Vanilla',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: usageController,
+                          decoration: const InputDecoration(
+                            labelText: 'Usage (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.fitness_center),
+                            hintText: 'e.g. Take 1 scoop post-workout',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: warningsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Warnings (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.warning),
+                            hintText: 'e.g. Not for children',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: nutritionFactsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nutrition Facts (optional)',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.fact_check),
+                            hintText: 'e.g. Protein: 24g, Carbs: 3g',
+                          ),
                         ),
                       ],
                     ),
@@ -636,7 +1089,23 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          // Dispose controllers before closing
+                          nameController.dispose();
+                          descriptionController.dispose();
+                          priceController.dispose();
+                          categoryController.dispose();
+                          discountController.dispose();
+                          ratingController.dispose();
+                          supplementTypeController.dispose();
+                          ingredientsController.dispose();
+                          servingSizeController.dispose();
+                          flavorsController.dispose();
+                          usageController.dispose();
+                          warningsController.dispose();
+                          nutritionFactsController.dispose();
+                          Navigator.of(context).pop();
+                        },
                         child: const Text('Cancel'),
                       ),
                       const SizedBox(width: 12),
@@ -667,7 +1136,55 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                             );
                             return;
                           }
+
+                          // Validate rating
+                          final rating = double.tryParse(ratingController.text);
+                          if (rating == null || rating < 0 || rating > 5) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Rating must be between 0.0 and 5.0',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Validate discount dates if discount is set
+                          if (discount != null && discount! > 0) {
+                            if (discountStartDate == null ||
+                                discountEndDate == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please select both start and end dates for discount',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            if (discountEndDate!.isBefore(discountStartDate!)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'End date must be after start date',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
                           try {
+                            final price =
+                                double.tryParse(priceController.text) ?? 0.0;
+                            double? discountPrice;
+
+                            // Calculate discount price if discount is set
+                            if (discount != null && discount! > 0) {
+                              discountPrice = price * (1 - discount! / 100);
+                            }
+
                             await FirebaseFirestore.instance
                                 .collection('products')
                                 .doc(product['id'])
@@ -675,15 +1192,43 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                   'name': nameController.text.trim(),
                                   'description': descriptionController.text
                                       .trim(),
-                                  'price':
-                                      double.tryParse(priceController.text) ??
-                                      0.0,
+                                  'price': price,
                                   'category': categoryController.text.trim(),
+                                  'rating': rating,
                                   'imageUrl': selectedImageUrl,
-                                  'isHot': isHot,
                                   'discount': discount,
+                                  'discountPrice': discountPrice,
+                                  'discountStartDate': discountStartDate,
+                                  'discountEndDate': discountEndDate,
+                                  'supplementType': supplementTypeController
+                                      .text
+                                      .trim(),
+                                  'ingredients': ingredientsController.text
+                                      .trim(),
+                                  'servingSize': servingSizeController.text
+                                      .trim(),
+                                  'flavors': flavorsController.text.trim(),
+                                  'usage': usageController.text.trim(),
+                                  'warnings': warningsController.text.trim(),
+                                  'nutritionFacts': nutritionFactsController
+                                      .text
+                                      .trim(),
                                   'updatedAt': FieldValue.serverTimestamp(),
                                 });
+                            // Dispose controllers before closing
+                            nameController.dispose();
+                            descriptionController.dispose();
+                            priceController.dispose();
+                            categoryController.dispose();
+                            discountController.dispose();
+                            ratingController.dispose();
+                            supplementTypeController.dispose();
+                            ingredientsController.dispose();
+                            servingSizeController.dispose();
+                            flavorsController.dispose();
+                            usageController.dispose();
+                            warningsController.dispose();
+                            nutritionFactsController.dispose();
                             Navigator.of(context).pop();
                             _loadProducts();
                             if (mounted) {
@@ -742,7 +1287,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Are you sure you want to delete \"${product['name']}\"?',
+                'Are you sure you want to delete "${product['name']}"?',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium,
               ),

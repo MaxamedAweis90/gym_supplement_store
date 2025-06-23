@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:fluttertoast/fluttertoast.dart'; // ✅ Add this
+import 'package:provider/provider.dart';
 import 'package:gym_supplement_store/auth/register.dart';
-import 'package:gym_supplement_store/pages/Homepage.dart';
 import 'package:gym_supplement_store/widgets/bottomnav.dart';
 import 'package:gym_supplement_store/admin/admin_login.dart';
+import 'package:gym_supplement_store/providers/user_provider.dart';
 
 class LoginPage extends StatefulWidget {
   final String? emailFromRegister;
@@ -52,6 +53,12 @@ class _LoginPageState extends State<LoginPage> {
 
       await FirebaseAuth.instance.signInWithCredential(credential);
 
+      // Initialize user data after successful login
+      await Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).initializeUserData();
+
       setState(() => _isLoading = false);
 
       Fluttertoast.showToast(
@@ -65,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => const Bottomnav()),
       );
     } catch (e) {
       setState(() {
@@ -89,6 +96,12 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
+
+      // Initialize user data after successful login
+      await Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).initializeUserData();
 
       setState(() => _isLoading = false);
 

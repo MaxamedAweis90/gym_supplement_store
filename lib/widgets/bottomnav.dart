@@ -44,8 +44,10 @@ class _BottomnavState extends State<Bottomnav> {
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: theme.shadowColor.withOpacity(0.1),
-                blurRadius: 10,
+                color: theme.brightness == Brightness.dark
+                    ? Colors.black.withOpacity(0.25)
+                    : theme.shadowColor.withOpacity(0.12),
+                blurRadius: theme.brightness == Brightness.dark ? 24 : 10,
                 offset: const Offset(0, -2),
               ),
             ],
@@ -53,8 +55,10 @@ class _BottomnavState extends State<Bottomnav> {
           child: CurvedNavigationBar(
             height: 70,
             backgroundColor: Colors.transparent, // Let shadow show
-            color: theme.colorScheme.surface,
-            animationDuration: Duration(milliseconds: 500),
+            color: theme.brightness == Brightness.dark
+                ? Colors.grey[900]!
+                : theme.colorScheme.surface,
+            animationDuration: const Duration(milliseconds: 350),
             index: currentTabIndex,
             onTap: (int index) {
               setState(() {

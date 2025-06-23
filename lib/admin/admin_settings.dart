@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gym_supplement_store/auth/login.dart';
 
 class AdminSettingsPage extends StatefulWidget {
   const AdminSettingsPage({super.key});
@@ -296,7 +297,12 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         await FirebaseAuth.instance.signOut();
-                        // The AuthWrapper will automatically handle the navigation
+                        // Navigate to login screen and clear all previous routes
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginPage()),
+                          (route) => false, // This removes all previous routes
+                        );
                       },
                       icon: const Icon(Icons.logout),
                       label: const Text('Logout'),

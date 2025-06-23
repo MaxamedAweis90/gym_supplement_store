@@ -3,6 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:gym_supplement_store/providers/theme_provider.dart';
+import 'package:gym_supplement_store/providers/user_provider.dart';
+import 'package:gym_supplement_store/auth/login.dart';
+import 'package:gym_supplement_store/widgets/user_avatar_picker.dart';
 
 class ProfileTap extends StatefulWidget {
   const ProfileTap({super.key});
@@ -17,171 +20,213 @@ class _ProfileTapState extends State<ProfileTap> {
     final user = FirebaseAuth.instance.currentUser;
     final theme = Theme.of(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context);
 
-    // If no user is authenticated, this shouldn't happen due to AuthWrapper
     if (user == null) {
       return const Scaffold(body: Center(child: Text('No user found')));
     }
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.background,
-      body: CustomScrollView(
-        slivers: [
-          // Custom App Bar
-          SliverAppBar(
-            expandedHeight: 200,
-            floating: false,
-            pinned: true,
-            backgroundColor: theme.colorScheme.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.secondary,
-                    ],
+    // Initialize user data if not already loaded
+    if (userProvider.userData == null && !userProvider.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        userProvider.initializeUserData();
+      });
+    }
+
+    // Show loading indicator if data is being loaded
+    if (userProvider.isLoading && userProvider.userData == null) {
+      return SafeArea(
+        child: Scaffold(
+          backgroundColor: theme.colorScheme.surface,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(color: theme.colorScheme.primary),
+                const SizedBox(height: 16),
+                Text(
+                  'Loading profile...',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
-                child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 20),
-                      // Profile Avatar
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: theme.colorScheme.onPrimary,
-                            width: 4,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.shadowColor.withOpacity(0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Clean Header with Profile Image
+            SliverAppBar(
+              expandedHeight: 280,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: theme.colorScheme.surface,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        theme.colorScheme.primary.withOpacity(0.1),
+                        theme.colorScheme.surface,
+                      ],
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+
+                        // Profile Image Section
+                        UserAvatarPicker(
+                          key: ValueKey(userProvider.avatarUrl),
+                          initialImageUrl: userProvider.avatarUrl,
+                          userId: user.uid,
+                          size: 120,
+                          onImageChanged: (String? newAvatarUrl) async {
+                            await userProvider.updateAvatarUrl(newAvatarUrl);
+                          },
                         ),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundColor: theme.colorScheme.surface,
-                          child: Icon(
-                            Icons.person,
-                            size: 60,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Username from Firestore
-                      StreamBuilder<DocumentSnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(user.uid)
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          String displayName = 'User Name';
-                          if (snapshot.hasData && snapshot.data!.exists) {
-                            final data =
-                                snapshot.data!.data() as Map<String, dynamic>?;
-                            displayName =
-                                data?['username'] ??
-                                data?['displayName'] ??
+
+                        const SizedBox(height: 20),
+
+                        // User Info
+                        Consumer<UserProvider>(
+                          builder: (context, userProvider, child) {
+                            String displayName =
+                                userProvider.username ??
                                 user.displayName ??
                                 'User Name';
-                          } else if (user.displayName != null) {
-                            displayName = user.displayName!;
-                          }
 
-                          return Text(
-                            displayName,
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              color: theme.colorScheme.onPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user.email ?? 'user@example.com',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                            return Column(
+                              children: [
+                                Text(
+                                  displayName,
+                                  style: theme.textTheme.headlineMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 26,
+                                      ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  userProvider.email ??
+                                      user.email ??
+                                      'user@example.com',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.7),
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // Profile Content
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-
-                  // Quick Stats Cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          'Orders',
-                          '12',
-                          Icons.shopping_bag_outlined,
-                          theme.colorScheme.primary,
+            // Content Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // Stats Section
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.shadowColor.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.1),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          'Favorites',
-                          '8',
-                          Icons.favorite_outline,
-                          theme.colorScheme.secondary,
-                        ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildStatItem(
+                              context,
+                              'Orders',
+                              '12',
+                              Icons.shopping_bag_outlined,
+                              theme.colorScheme.primary,
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: theme.colorScheme.outline.withOpacity(0.2),
+                          ),
+                          Expanded(
+                            child: _buildStatItem(
+                              context,
+                              'Favorites',
+                              '8',
+                              Icons.favorite_outline,
+                              theme.colorScheme.secondary,
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: theme.colorScheme.outline.withOpacity(0.2),
+                          ),
+                          Expanded(
+                            child: _buildStatItem(
+                              context,
+                              'Reviews',
+                              '5',
+                              Icons.star_outline,
+                              theme.colorScheme.tertiary,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          'Reviews',
-                          '5',
-                          Icons.star_outline,
-                          theme.colorScheme.tertiary,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // Settings Section
-                  _buildSettingsSection(context, themeProvider, theme),
+                    // Settings Section
+                    _buildSettingsSection(context, themeProvider, theme),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // Logout Button
-                  _buildLogoutButton(context, theme),
-                ],
+                    // Logout Button
+                    _buildLogoutButton(context, theme),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatCard(
+  Widget _buildStatItem(
     BuildContext context,
     String title,
     String value,
@@ -190,45 +235,27 @@ class _ProfileTapState extends State<ProfileTap> {
   ) {
     final theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 24),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+            fontSize: 20,
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            fontSize: 12,
           ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -240,21 +267,33 @@ class _ProfileTapState extends State<ProfileTap> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Settings',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 16),
+          child: Text(
+            'Settings',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 20,
+            ),
           ),
         ),
-        const SizedBox(height: 16),
-        Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: theme.shadowColor.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            border: Border.all(
+              color: theme.colorScheme.outline.withOpacity(0.1),
+            ),
           ),
           child: Column(
             children: [
-              // Theme Mode
               _buildSettingTile(
                 context,
                 'Theme Mode',
@@ -264,24 +303,22 @@ class _ProfileTapState extends State<ProfileTap> {
                 trailing: _buildThemeModeSelector(themeProvider, theme),
               ),
               _buildDivider(theme),
-              // Account Settings
               _buildSettingTile(
                 context,
                 'Account Settings',
-                'Manage your account',
+                'Manage your account preferences',
                 Icons.settings_outlined,
                 theme.colorScheme.primary,
                 onTap: () {
-                  // TODO: Navigate to account settings
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Account settings coming soon!'),
+                      duration: Duration(seconds: 2),
                     ),
                   );
                 },
               ),
               _buildDivider(theme),
-              // Help & Support
               _buildSettingTile(
                 context,
                 'Help & Support',
@@ -289,16 +326,15 @@ class _ProfileTapState extends State<ProfileTap> {
                 Icons.help_outline,
                 theme.colorScheme.tertiary,
                 onTap: () {
-                  // TODO: Navigate to help & support
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Help & support coming soon!'),
+                      duration: Duration(seconds: 2),
                     ),
                   );
                 },
               ),
               _buildDivider(theme),
-              // Privacy Policy
               _buildSettingTile(
                 context,
                 'Privacy Policy',
@@ -306,10 +342,10 @@ class _ProfileTapState extends State<ProfileTap> {
                 Icons.privacy_tip_outlined,
                 theme.colorScheme.primary,
                 onTap: () {
-                  // TODO: Navigate to privacy policy
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Privacy policy coming soon!'),
+                      duration: Duration(seconds: 2),
                     ),
                   );
                 },
@@ -335,47 +371,52 @@ class _ProfileTapState extends State<ProfileTap> {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       leading: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: color, size: 20),
       ),
       title: Text(
         title,
         style: theme.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
+          fontSize: 16,
         ),
       ),
       subtitle: Text(
         subtitle,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurface.withOpacity(0.7),
+          color: theme.colorScheme.onSurface.withOpacity(0.6),
+          fontSize: 13,
         ),
       ),
-      trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 16),
+      trailing:
+          trailing ??
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: theme.colorScheme.onSurface.withOpacity(0.4),
+          ),
       onTap: onTap,
     );
   }
 
   Widget _buildDivider(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.only(left: 70, right: 20),
-      child: Divider(height: 1, color: theme.dividerColor.withOpacity(0.3)),
+      padding: const EdgeInsets.only(left: 60, right: 20),
+      child: Divider(height: 1, color: theme.dividerColor.withOpacity(0.1)),
     );
   }
 
   Widget _buildThemeModeSelector(ThemeProvider themeProvider, ThemeData theme) {
     return Container(
-      height: 36,
+      height: 32,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.3),
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -427,15 +468,15 @@ class _ProfileTapState extends State<ProfileTap> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 36,
-        height: 36,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
           color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(
           icon,
-          size: 18,
+          size: 16,
           color: isSelected
               ? theme.colorScheme.onPrimary
               : theme.colorScheme.onSurface.withOpacity(0.6),
@@ -449,17 +490,12 @@ class _ProfileTapState extends State<ProfileTap> {
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.error,
-            theme.colorScheme.error.withOpacity(0.8),
-          ],
-        ),
+        color: theme.colorScheme.error,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.error.withOpacity(0.3),
-            blurRadius: 10,
+            color: theme.colorScheme.error.withOpacity(0.2),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
@@ -483,6 +519,7 @@ class _ProfileTapState extends State<ProfileTap> {
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.onError,
                 fontWeight: FontWeight.w600,
+                fontSize: 16,
               ),
             ),
           ],
@@ -556,9 +593,18 @@ class _ProfileTapState extends State<ProfileTap> {
 
   Future<void> _performLogout(BuildContext context, ThemeData theme) async {
     try {
+      // Clear user data from provider
+      Provider.of<UserProvider>(context, listen: false).clearUserData();
+
       await FirebaseAuth.instance.signOut();
-      // The AuthWrapper will automatically handle the navigation
+
       if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+          (route) => false,
+        );
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(

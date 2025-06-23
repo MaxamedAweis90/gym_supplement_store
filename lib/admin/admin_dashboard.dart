@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gym_supplement_store/admin/admin_bottom_nav.dart';
 import 'package:gym_supplement_store/admin/admin_products.dart';
 import 'package:gym_supplement_store/admin/admin_settings.dart';
-import 'package:gym_supplement_store/service/seed_products.dart';
+import 'package:gym_supplement_store/auth/login.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -65,7 +65,12 @@ class AdminHomeTab extends StatelessWidget {
             icon: Icon(Icons.logout, color: theme.colorScheme.onSurface),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
-              // The AuthWrapper will automatically handle the navigation
+              // Navigate to login screen and clear all previous routes
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false, // This removes all previous routes
+              );
             },
           ),
         ],
@@ -229,38 +234,6 @@ class AdminHomeTab extends StatelessWidget {
               theme.colorScheme.tertiary,
               () {
                 // Navigate to user management
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            _buildQuickActionCard(
-              context,
-              'Seed Products',
-              'Add sample products to database',
-              Icons.add_circle_outline,
-              theme.colorScheme.secondary,
-              () async {
-                try {
-                  await SeedProductsService.seedProducts();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Sample products added successfully!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error seeding products: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
               },
             ),
           ],

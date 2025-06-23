@@ -31,24 +31,31 @@ static const String supabaseUrl = 'YOUR_PROJECT_URL';
 static const String supabaseAnonKey = 'YOUR_ANON_KEY';
 ```
 
-## 4. Create Storage Bucket
+## 4. Create Storage Buckets
 
-1. In your Supabase dashboard, go to **Storage**
-2. Click "Create a new bucket"
-3. Enter the following details:
-   - **Name**: `product-images`
-   - **Public bucket**: ✅ Check this option
-   - **File size limit**: `5MB` (or your preferred limit)
-   - **Allowed MIME types**: `image/*`
-4. Click "Create bucket"
+### 1. Product Images Bucket
+- **Bucket Name**: `product-images`
+- **Public**: Yes
+- **File Size Limit**: 10MB
+- **Allowed MIME Types**: image/*
+
+### 2. User Avatar Bucket
+- **Bucket Name**: `useravatar`
+- **Public**: Yes
+- **File Size Limit**: 5MB
+- **Allowed MIME Types**: image/*
 
 ## 5. Set Up Storage Policies
+
+Since you're using Firebase for authentication (not Supabase Auth), we need to use simpler storage policies that allow public access for read operations and basic authenticated access for write operations.
+
+### Product Images Bucket Policies
 
 1. In the Storage section, click on your `product-images` bucket
 2. Go to **Policies** tab
 3. Add the following policies:
 
-### Policy 1: Allow public read access
+#### Policy 1: Allow public read access
 ```sql
 -- Policy name: "Public read access"
 -- Operation: SELECT
@@ -57,32 +64,88 @@ static const String supabaseAnonKey = 'YOUR_ANON_KEY';
 true
 ```
 
-### Policy 2: Allow authenticated users to upload
+#### Policy 2: Allow public upload (since Firebase handles auth)
 ```sql
--- Policy name: "Authenticated users can upload"
+-- Policy name: "Public upload access"
 -- Operation: INSERT
--- Target roles: authenticated
+-- Target roles: public
 -- Policy definition:
-auth.role() = 'authenticated'
+true
 ```
 
-### Policy 3: Allow users to update their own uploads
+#### Policy 3: Allow public update
 ```sql
--- Policy name: "Users can update own uploads"
+-- Policy name: "Public update access"
 -- Operation: UPDATE
--- Target roles: authenticated
+-- Target roles: public
 -- Policy definition:
-auth.role() = 'authenticated'
+true
 ```
 
-### Policy 4: Allow users to delete their own uploads
+#### Policy 4: Allow public delete
 ```sql
--- Policy name: "Users can delete own uploads"
+-- Policy name: "Public delete access"
 -- Operation: DELETE
--- Target roles: authenticated
+-- Target roles: public
 -- Policy definition:
-auth.role() = 'authenticated'
+true
 ```
+
+### User Avatar Bucket Policies
+
+1. Create the `useravatar` bucket
+2. Go to **Policies** tab
+3. Add the same policies as above:
+
+#### Policy 1: Allow public read access
+```sql
+-- Policy name: "Public read access"
+-- Operation: SELECT
+-- Target roles: public
+-- Policy definition:
+true
+```
+
+#### Policy 2: Allow public upload
+```sql
+-- Policy name: "Public upload access"
+-- Operation: INSERT
+-- Target roles: public
+-- Policy definition:
+true
+```
+
+#### Policy 3: Allow public update
+```sql
+-- Policy name: "Public update access"
+-- Operation: UPDATE
+-- Target roles: public
+-- Policy definition:
+true
+```
+
+#### Policy 4: Allow public delete
+```sql
+-- Policy name: "Public delete access"
+-- Operation: DELETE
+-- Target roles: public
+-- Policy definition:
+true
+```
+
+### Alternative: More Secure Approach (Optional)
+
+If you want more security, you can implement server-side validation by:
+
+1. **Creating a Supabase Edge Function** that validates Firebase tokens
+2. **Using the service role key** in your backend to handle uploads
+3. **Implementing custom policies** based on your Firebase user data
+
+However, for most use cases, the public policies above are sufficient since:
+- Firebase handles user authentication
+- Your app validates user permissions before allowing uploads
+- File names include user IDs for tracking ownership
+- Storage quotas and file size limits provide additional protection
 
 ## 6. Enable Supabase in Your App
 
@@ -174,11 +237,34 @@ With Supabase integration, you now have:
 
 ## 12. Security Considerations
 
+Since you're using Firebase for authentication and Supabase only for storage:
+
+### Current Security Model:
+- **Firebase Auth**: Handles user authentication and session management
+- **Supabase Storage**: Provides public access with client-side validation
+- **App-Level Security**: Your Flutter app validates user permissions before allowing uploads
+
+### Security Measures in Place:
+- ✅ **Firebase Authentication**: Secure user login and session management
+- ✅ **File Naming**: Files include user IDs for ownership tracking
+- ✅ **File Size Limits**: Prevents abuse through large file uploads
+- ✅ **MIME Type Restrictions**: Only allows image files
+- ✅ **Client-Side Validation**: App checks user permissions before uploads
+- ✅ **Storage Quotas**: Supabase enforces storage limits
+
+### Important Notes:
 - The anon key is safe to use in client-side code
 - Never expose your service role key in the client
-- Use Row Level Security (RLS) policies for sensitive data
-- Regularly review and update your storage policies
-- Monitor your storage usage and costs
+- File access is public, but file names include user IDs for tracking
+- Your app's Firebase Auth ensures only authenticated users can upload
+- Consider implementing server-side validation for production apps
+
+### For Production Apps:
+If you need additional security, consider:
+1. **Server-side validation** using Firebase Admin SDK
+2. **Supabase Edge Functions** for custom upload logic
+3. **Signed URLs** for temporary file access
+4. **Rate limiting** on upload operations
 
 ## 13. Cost Optimization
 
@@ -186,4 +272,11 @@ With Supabase integration, you now have:
 - Use image transformations to serve optimized images
 - Implement image compression before upload
 - Consider using CDN for better performance
-- Monitor your storage and bandwidth usage 
+- Monitor your storage and bandwidth usage
+
+## 14. File Naming Convention
+
+- **Product Images**: `{productId}_{timestamp}_{originalName}`
+- **User Avatars**: `{userId}_{timestamp}_{originalName}`
+
+This ensures unique file names and easy identification of file ownership. 

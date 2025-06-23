@@ -7,6 +7,9 @@ class SupabaseConfig {
   /// Default bucket for product images
   static const String defaultBucket = 'product-images';
 
+  /// Bucket for user profile images
+  static const String userAvatarBucket = 'useravatar';
+
   static const String supabaseUrl = 'https://rokozthjllfouacooeul.supabase.co';
   static const String supabaseAnonKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJva296dGhqbGxmb3VhY29vZXVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MjczNjIsImV4cCI6MjA2NjAwMzM2Mn0.lkbY8Erj3cO3X0i_GhFmOED-WiptA3OB5z2UcKIanMI';
@@ -144,6 +147,67 @@ class SupabaseConfig {
   }) {
     final String bucket = bucketName ?? defaultBucket;
     String url = client.storage.from(bucket).getPublicUrl(imagePath);
+    // Add transformations if specified
+    if (width != null || height != null || format != null) {
+      final transformations = <String>[];
+      if (width != null) transformations.add('width=$width');
+      if (height != null) transformations.add('height=$height');
+      if (format != null) transformations.add('format=$format');
+      if (transformations.isNotEmpty) {
+        url += '?${transformations.join('&')}';
+      }
+    }
+    return url;
+  }
+
+  /// Upload user avatar to Supabase Storage
+  static Future<String?> uploadUserAvatar({
+    required File imageFile,
+    required String userId,
+    String? fileName,
+  }) async {
+    try {
+      final finalFileName =
+          fileName ??
+          '${userId}_${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+
+      final response = await client.storage
+          .from(userAvatarBucket)
+          .upload(finalFileName, imageFile);
+
+      if (response.isNotEmpty) {
+        final imageUrl = client.storage
+            .from(userAvatarBucket)
+            .getPublicUrl(finalFileName);
+        return imageUrl;
+      }
+      return null;
+    } catch (e) {
+      print('Error uploading user avatar: $e');
+      return null;
+    }
+  }
+
+  /// Delete user avatar from Supabase Storage
+  static Future<bool> deleteUserAvatar({required String imageUrl}) async {
+    try {
+      final fileName = imageUrl.split('/').last;
+      await client.storage.from(userAvatarBucket).remove([fileName]);
+      return true;
+    } catch (e) {
+      print('Error deleting user avatar: $e');
+      return false;
+    }
+  }
+
+  /// Get user avatar URL with transformations
+  static String getUserAvatarUrl({
+    required String imagePath,
+    int? width,
+    int? height,
+    String? format,
+  }) {
+    String url = client.storage.from(userAvatarBucket).getPublicUrl(imagePath);
     // Add transformations if specified
     if (width != null || height != null || format != null) {
       final transformations = <String>[];
