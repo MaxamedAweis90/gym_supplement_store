@@ -60,40 +60,50 @@ class FavoriteTap extends StatelessWidget {
                 }
                 return Padding(
                   padding: const EdgeInsets.all(16),
-                  child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      int crossAxisCount = 2;
+                      double width = constraints.maxWidth;
+                      if (width > 900) {
+                        crossAxisCount = 4;
+                      } else if (width > 600) {
+                        crossAxisCount = 3;
+                      }
+                      return GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
                           childAspectRatio: 0.75,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      final product =
-                          products[index].data() as Map<String, dynamic>;
-                      final productId = products[index].id;
-                      return ProductCard(
-                        imageUrl: product['imageUrl'] ?? '',
-                        name: product['name'] ?? 'Product Name',
-                        price: (product['price'] ?? 0.0).toDouble(),
-                        discountPrice: product['discountPrice'] != null
-                            ? (product['discountPrice'] as num).toDouble()
-                            : null,
-                        rating: product['rating'] != null
-                            ? (product['rating'] as num).toDouble()
-                            : null,
-                        isFavorite: userProvider.isFavorite(productId),
-                        onFavoriteToggle: () =>
-                            userProvider.toggleFavorite(productId),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProductDetailScreen(
-                                product: {...product, 'id': productId},
-                              ),
-                            ),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final product =
+                              products[index].data() as Map<String, dynamic>;
+                          final productId = products[index].id;
+                          return ProductCard(
+                            imageUrl: product['imageUrl'] ?? '',
+                            name: product['name'] ?? 'Product Name',
+                            price: (product['price'] ?? 0.0).toDouble(),
+                            discountPrice: product['discountPrice'] != null
+                                ? (product['discountPrice'] as num).toDouble()
+                                : null,
+                            rating: product['rating'] != null
+                                ? (product['rating'] as num).toDouble()
+                                : null,
+                            isFavorite: userProvider.isFavorite(productId),
+                            onFavoriteToggle: () =>
+                                userProvider.toggleFavorite(productId),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ProductDetailScreen(
+                                    product: {...product, 'id': productId},
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         },
                       );

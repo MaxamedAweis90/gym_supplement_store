@@ -272,7 +272,7 @@ If you need additional security, consider:
 - Use image transformations to serve optimized images
 - Implement image compression before upload
 - Consider using CDN for better performance
-- Monitor your storage and bandwidth usage
+- Monitor your storage and bandwidth usage 
 
 ## 14. File Naming Convention
 

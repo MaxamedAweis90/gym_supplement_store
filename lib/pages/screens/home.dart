@@ -89,17 +89,17 @@ class _HomeTapState extends State<HomeTap> {
               // Latest Products Section
               _buildLatestProductsSection(context),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 0),
 
               // Deals Section
               _buildDealsSection(context),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 0),
 
               // All Products Section
               _buildAllProductsSection(context),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 0),
             ],
           ),
         ),
@@ -592,41 +592,53 @@ class _HomeTapState extends State<HomeTap> {
               );
             }
 
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                final product = products[index].data() as Map<String, dynamic>;
-                final productId = products[index].id;
-                return ProductCard(
-                  imageUrl: product['imageUrl'] ?? '',
-                  name: product['name'] ?? 'Product Name',
-                  price: (product['price'] ?? 0.0).toDouble(),
-                  discountPrice: product['discountPrice'] != null
-                      ? (product['discountPrice'] as num).toDouble()
-                      : null,
-                  rating: product['rating'] != null
-                      ? (product['rating'] as num).toDouble()
-                      : null,
-                  isFavorite: userProvider.isFavorite(productId),
-                  onFavoriteToggle: () =>
-                      userProvider.toggleFavorite(productId),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ProductDetailScreen(
-                          product: {...product, 'id': productId},
-                        ),
-                      ),
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                int crossAxisCount = 2;
+                double width = constraints.maxWidth;
+                if (width > 900) {
+                  crossAxisCount = 4;
+                } else if (width > 600) {
+                  crossAxisCount = 3;
+                }
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final product =
+                        products[index].data() as Map<String, dynamic>;
+                    final productId = products[index].id;
+                    return ProductCard(
+                      imageUrl: product['imageUrl'] ?? '',
+                      name: product['name'] ?? 'Product Name',
+                      price: (product['price'] ?? 0.0).toDouble(),
+                      discountPrice: product['discountPrice'] != null
+                          ? (product['discountPrice'] as num).toDouble()
+                          : null,
+                      rating: product['rating'] != null
+                          ? (product['rating'] as num).toDouble()
+                          : null,
+                      isFavorite: userProvider.isFavorite(productId),
+                      onFavoriteToggle: () =>
+                          userProvider.toggleFavorite(productId),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetailScreen(
+                              product: {...product, 'id': productId},
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
