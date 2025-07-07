@@ -4,18 +4,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:gym_supplement_store/pages/start.dart';
-import 'package:gym_supplement_store/pages/Homepage.dart';
 import 'package:gym_supplement_store/providers/theme_provider.dart';
 import 'package:gym_supplement_store/providers/user_provider.dart';
 import 'package:gym_supplement_store/service/supabase_config.dart';
+import 'widgets/bottomnav.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Initialize Supabase (uncomment when you have your credentials)
   await SupabaseConfig.initialize();
-
   runApp(const MyApp());
 }
 
@@ -301,28 +299,60 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Authentication wrapper to handle auth state
-class AuthWrapper extends StatelessWidget {
+// Authentication wrapper to handle auth state and first launch
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
   @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool? _isFirstLaunch;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFirstLaunch();
+  }
+
+  Future<void> _checkFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isFirst = prefs.getBool('isFirstLaunch') ?? true;
+    if (isFirst) {
+      await prefs.setBool('isFirstLaunch', false);
+    }
+    setState(() {
+      _isFirstLaunch = isFirst;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isFirstLaunch == null) {
+      // Still loading first launch state
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_isFirstLaunch == true) {
+      // First launch: show onboarding/start page
+      return const Start();
+    }
+    // Not first launch: check auth state
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // Show loading while checking auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
-
-        // If user is authenticated, show main app
         if (snapshot.hasData && snapshot.data != null) {
-          return const HomePage();
+          // User is logged in
+          // You can add admin check here if needed
+          // For now, show Bottomnav for all logged-in users
+          return const Bottomnav();
         }
-
-        // If user is not authenticated, show onboarding/start screen
+        // Not logged in: show login page
         return const Start();
       },
     );

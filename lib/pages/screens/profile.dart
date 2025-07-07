@@ -6,6 +6,8 @@ import 'package:gym_supplement_store/providers/theme_provider.dart';
 import 'package:gym_supplement_store/providers/user_provider.dart';
 import 'package:gym_supplement_store/auth/login.dart';
 import 'package:gym_supplement_store/widgets/user_avatar_picker.dart';
+import 'package:gym_supplement_store/main.dart';
+import 'package:gym_supplement_store/widgets/splash_screen.dart';
 
 class ProfileTap extends StatefulWidget {
   const ProfileTap({super.key});
@@ -601,7 +603,12 @@ class _ProfileTapState extends State<ProfileTap> {
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const LoginPage()),
+          MaterialPageRoute(
+            builder: (_) => SplashScreen(
+              duration: const Duration(seconds: 4),
+              nextScreen: const LoginPage(),
+            ),
+          ),
           (route) => false,
         );
 

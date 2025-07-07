@@ -6,6 +6,8 @@ import 'package:fluttertoast/fluttertoast.dart'; // ✅ Import
 import 'package:provider/provider.dart';
 import 'package:gym_supplement_store/auth/login.dart';
 import 'package:gym_supplement_store/providers/user_provider.dart';
+// import 'package:gym_supplement_store/widgets/user_avatar_picker.dart';
+import 'package:gym_supplement_store/auth/add_avatar_screen.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -58,54 +60,17 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-            'username': username,
-            'email': email,
-            'avatarUrl': null,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-
-      // Initialize user data after successful registration
-      await Provider.of<UserProvider>(
-        context,
-        listen: false,
-      ).initializeUserData();
-
-      setState(() => _isLoading = false);
-      print("✅ Registration successful");
-
-      // ✅ Show Toast
-      Fluttertoast.showToast(
-        msg: "✅ Registration successful! Please login.",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-
-      // ✅ Go to Login Page
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => LoginPage(emailFromRegister: email)),
-      );
-    } on FirebaseAuthException catch (e) {
-      _showError(e.message ?? "Registration failed.");
-    } catch (e) {
-      _showError(e.toString());
-    }
+    // Instead of registering here, go to AddAvatarScreen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddAvatarScreen(
+          username: username,
+          email: email,
+          password: password,
+        ),
+      ),
+    );
   }
 
   Future<void> _handleGoogleSignIn() async {

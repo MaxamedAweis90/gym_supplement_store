@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:gym_supplement_store/admin/admin_dashboard.dart';
+import 'package:gym_supplement_store/widgets/splash_screen.dart';
 
 class AdminLoginPage extends StatefulWidget {
   const AdminLoginPage({super.key});
@@ -57,10 +58,15 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
               fontSize: 16.0,
             );
 
-            // Navigate to admin dashboard (you can create this later)
+            // Navigate to admin dashboard (show splash first)
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const AdminDashboard()),
+              MaterialPageRoute(
+                builder: (_) => SplashScreen(
+                  duration: const Duration(seconds: 7),
+                  nextScreen: const AdminDashboard(),
+                ),
+              ),
             );
           } else {
             // User is not admin, sign them out

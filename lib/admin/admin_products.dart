@@ -325,19 +325,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                       ),
                       IconButton(
                         onPressed: () {
-                          // Dispose controllers before closing
-                          nameController.dispose();
-                          descriptionController.dispose();
-                          priceController.dispose();
-                          categoryController.dispose();
-                          ratingController.dispose();
-                          supplementTypeController.dispose();
-                          ingredientsController.dispose();
-                          servingSizeController.dispose();
-                          flavorsController.dispose();
-                          usageController.dispose();
-                          warningsController.dispose();
-                          nutritionFactsController.dispose();
                           Navigator.of(context).pop();
                         },
                         icon: const Icon(Icons.close, color: Colors.white),
@@ -580,19 +567,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          // Dispose controllers before closing
-                          nameController.dispose();
-                          descriptionController.dispose();
-                          priceController.dispose();
-                          categoryController.dispose();
-                          ratingController.dispose();
-                          supplementTypeController.dispose();
-                          ingredientsController.dispose();
-                          servingSizeController.dispose();
-                          flavorsController.dispose();
-                          usageController.dispose();
-                          warningsController.dispose();
-                          nutritionFactsController.dispose();
                           Navigator.of(context).pop();
                         },
                         child: const Text('Cancel'),
@@ -703,19 +677,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                       .trim(),
                                   'createdAt': FieldValue.serverTimestamp(),
                                 });
-                            // Dispose controllers before closing
-                            nameController.dispose();
-                            descriptionController.dispose();
-                            priceController.dispose();
-                            categoryController.dispose();
-                            ratingController.dispose();
-                            supplementTypeController.dispose();
-                            ingredientsController.dispose();
-                            servingSizeController.dispose();
-                            flavorsController.dispose();
-                            usageController.dispose();
-                            warningsController.dispose();
-                            nutritionFactsController.dispose();
                             Navigator.of(context).pop();
                             _loadProducts();
                             if (mounted) {
@@ -830,20 +791,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                       ),
                       IconButton(
                         onPressed: () {
-                          // Dispose controllers before closing
-                          nameController.dispose();
-                          descriptionController.dispose();
-                          priceController.dispose();
-                          categoryController.dispose();
-                          discountController.dispose();
-                          ratingController.dispose();
-                          supplementTypeController.dispose();
-                          ingredientsController.dispose();
-                          servingSizeController.dispose();
-                          flavorsController.dispose();
-                          usageController.dispose();
-                          warningsController.dispose();
-                          nutritionFactsController.dispose();
                           Navigator.of(context).pop();
                         },
                         icon: const Icon(Icons.close, color: Colors.white),
@@ -1090,20 +1037,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          // Dispose controllers before closing
-                          nameController.dispose();
-                          descriptionController.dispose();
-                          priceController.dispose();
-                          categoryController.dispose();
-                          discountController.dispose();
-                          ratingController.dispose();
-                          supplementTypeController.dispose();
-                          ingredientsController.dispose();
-                          servingSizeController.dispose();
-                          flavorsController.dispose();
-                          usageController.dispose();
-                          warningsController.dispose();
-                          nutritionFactsController.dispose();
                           Navigator.of(context).pop();
                         },
                         child: const Text('Cancel'),
@@ -1215,20 +1148,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                       .trim(),
                                   'updatedAt': FieldValue.serverTimestamp(),
                                 });
-                            // Dispose controllers before closing
-                            nameController.dispose();
-                            descriptionController.dispose();
-                            priceController.dispose();
-                            categoryController.dispose();
-                            discountController.dispose();
-                            ratingController.dispose();
-                            supplementTypeController.dispose();
-                            ingredientsController.dispose();
-                            servingSizeController.dispose();
-                            flavorsController.dispose();
-                            usageController.dispose();
-                            warningsController.dispose();
-                            nutritionFactsController.dispose();
                             Navigator.of(context).pop();
                             _loadProducts();
                             if (mounted) {

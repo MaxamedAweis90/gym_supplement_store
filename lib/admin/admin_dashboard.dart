@@ -4,6 +4,8 @@ import 'package:gym_supplement_store/admin/admin_bottom_nav.dart';
 import 'package:gym_supplement_store/admin/admin_products.dart';
 import 'package:gym_supplement_store/admin/admin_settings.dart';
 import 'package:gym_supplement_store/auth/login.dart';
+import 'package:gym_supplement_store/main.dart';
+import 'package:gym_supplement_store/widgets/splash_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -65,11 +67,16 @@ class AdminHomeTab extends StatelessWidget {
             icon: Icon(Icons.logout, color: theme.colorScheme.onSurface),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
-              // Navigate to login screen and clear all previous routes
+              // Show splash screen before navigating to login
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-                (route) => false, // This removes all previous routes
+                MaterialPageRoute(
+                  builder: (_) => SplashScreen(
+                    duration: const Duration(seconds: 2),
+                    nextScreen: const LoginPage(),
+                  ),
+                ),
+                (route) => false,
               );
             },
           ),

@@ -50,7 +50,7 @@ class ProductCard extends StatelessWidget {
             return Container(
               width: cardWidth,
               height: cardHeight,
-              color: Colors.yellow,
+              color: Colors.transparent,
               padding: const EdgeInsets.all(10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +166,7 @@ class ProductCard extends StatelessWidget {
             return Container(
               width: cardWidth,
               height: cardHeight,
-              color: Colors.yellow,
+              color: Colors.transparent,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,

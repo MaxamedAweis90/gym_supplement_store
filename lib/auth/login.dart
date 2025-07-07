@@ -7,6 +7,8 @@ import 'package:gym_supplement_store/auth/register.dart';
 import 'package:gym_supplement_store/widgets/bottomnav.dart';
 import 'package:gym_supplement_store/admin/admin_login.dart';
 import 'package:gym_supplement_store/providers/user_provider.dart';
+import 'package:gym_supplement_store/main.dart';
+import 'package:gym_supplement_store/widgets/splash_screen.dart';
 
 class LoginPage extends StatefulWidget {
   final String? emailFromRegister;
@@ -72,7 +74,12 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const Bottomnav()),
+        MaterialPageRoute(
+          builder: (_) => SplashScreen(
+            duration: const Duration(seconds: 4),
+            nextScreen: const Bottomnav(),
+          ),
+        ),
       );
     } catch (e) {
       setState(() {
@@ -116,7 +123,12 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const Bottomnav()),
+        MaterialPageRoute(
+          builder: (_) => SplashScreen(
+            duration: const Duration(seconds: 4),
+            nextScreen: const Bottomnav(),
+          ),
+        ),
       );
     } on FirebaseAuthException {
       setState(() {
