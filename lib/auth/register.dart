@@ -25,6 +25,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _isLoading = false;
   String? _error;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   void _showError(String message) {
     setState(() {
@@ -221,7 +223,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   const SizedBox(height: 10),
                   TextField(
                     controller: _passwordController,
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
                       prefixIcon: Icon(
@@ -237,16 +239,25 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
-                      suffixIcon: Icon(
-                        Icons.visibility_off_outlined,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
                       ),
                     ),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _confirmPasswordController,
-                    obscureText: true,
+                    obscureText: _obscureConfirmPassword,
                     style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
                       prefixIcon: Icon(
@@ -262,26 +273,22 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
-                      suffixIcon: Icon(
-                        Icons.visibility_off_outlined,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
                       ),
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: false,
-                        onChanged: (_) {},
-                        activeColor: theme.colorScheme.primary,
-                      ),
-                      Text(
-                        "Remind me next time",
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
+                  const SizedBox(height: 7),
                   if (_error != null) ...[
                     const SizedBox(height: 5),
                     Text(
@@ -321,30 +328,30 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _handleGoogleSignIn,
-                        icon: Image.asset(
-                          'assets/images/google.png',
-                          height: 24,
-                        ),
-                        label: Text(
-                          'Sign Up with Google',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.surface,
-                          foregroundColor: theme.colorScheme.onSurface,
-                          side: BorderSide(
-                            color: theme.colorScheme.outline.withOpacity(0.3),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
+                    // const SizedBox(height: 10),
+                    // SizedBox(
+                    //   width: double.infinity,
+                    //   child: ElevatedButton.icon(
+                    //     onPressed: _handleGoogleSignIn,
+                    //     icon: Image.asset(
+                    //       'assets/images/google.png',
+                    //       height: 24,
+                    //     ),
+                    //     label: Text(
+                    //       'Sign Up with Google',
+                    //       style: theme.textTheme.titleMedium,
+                    //     ),
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: theme.colorScheme.surface,
+                    //       foregroundColor: theme.colorScheme.onSurface,
+                    //       side: BorderSide(
+                    //         color: theme.colorScheme.outline.withOpacity(0.3),
+                    //       ),
+                    //       padding: const EdgeInsets.symmetric(vertical: 12),
+                    //     ),
+                    //   ),
+                    // ),
+                    const SizedBox(height: 8),
                     Center(
                       child: TextButton(
                         onPressed: () {

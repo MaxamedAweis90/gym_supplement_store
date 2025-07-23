@@ -11,6 +11,10 @@ class UserProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  int? orderCount;
+  int? favoriteCount;
+  int? badgeRank;
+
   // Getters
   Map<String, dynamic>? get userData => _userData;
   bool get isLoading => _isLoading;
@@ -78,6 +82,78 @@ class UserProvider extends ChangeNotifier {
     }
 
     await _loadUserData();
+    await loadUserStats();
+  }
+
+  Future<void> loadUserStats() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      // Get order counts
+      final ordersSnap = await firestore
+          .collection('orders')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+      final archiveSnap = await firestore
+          .collection('archive_orders')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      orderCount = ordersSnap.size + archiveSnap.size;
+
+      // Get favorites
+      final userDoc = await firestore.collection('users').doc(user.uid).get();
+      final favorites = (userDoc.data()?['favorites'] as List?) ?? [];
+      favoriteCount = favorites.length;
+
+      // Rank logic
+      final usersSnap = await firestore.collection('users').get();
+      List<Map<String, dynamic>> userStats = [];
+
+      for (var doc in usersSnap.docs) {
+        final uid = doc.id;
+        final favs = (doc.data()['favorites'] as List?) ?? [];
+
+        final userOrders = await firestore
+            .collection('orders')
+            .where('userId', isEqualTo: uid)
+            .get();
+
+        final userArchive = await firestore
+            .collection('archive_orders')
+            .where('userId', isEqualTo: uid)
+            .get();
+
+        userStats.add({
+          'uid': uid,
+          'orderCount': userOrders.size + userArchive.size,
+          'favoriteCount': favs.length,
+        });
+      }
+
+      // Sort users for ranking
+      userStats.sort((a, b) {
+        int cmp = (b['orderCount'] as int).compareTo(a['orderCount'] as int);
+        if (cmp == 0) {
+          return (b['favoriteCount'] as int).compareTo(
+            a['favoriteCount'] as int,
+          );
+        }
+        return cmp;
+      });
+
+      // Find badge rank
+      int rank = userStats.indexWhere((u) => u['uid'] == user.uid);
+      badgeRank = (rank >= 0 && rank < 3) ? rank + 1 : 0;
+
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
   }
 
   // Load user data from Firebase
@@ -165,6 +241,35 @@ class UserProvider extends ChangeNotifier {
   Future<void> refreshUserData() async {
     _userData = null; // Clear cache
     await _loadUserData();
+    await loadUserStats();
+  }
+
+  Future<void> fetchUserDataOnce() async {
+    final user = _auth.currentUser;
+    if (user == null || _userData != null) return;
+
+    try {
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+
+      if (doc.exists) {
+        _userData = {'uid': user.uid, ...doc.data()!};
+      } else {
+        // Fallback logic if document doesn't exist
+        _userData = {
+          'uid': user.uid,
+          'username': user.displayName ?? user.email?.split('@')[0] ?? 'User',
+          'email': user.email,
+          'avatarUrl': null,
+          'createdAt': FieldValue.serverTimestamp(),
+        };
+        await _firestore.collection('users').doc(user.uid).set(_userData!);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
   }
 
   // Clear user data on logout

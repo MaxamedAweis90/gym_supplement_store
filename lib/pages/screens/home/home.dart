@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gym_supplement_store/widgets/shimmer_product_card.dart';
 import 'package:provider/provider.dart';
 import 'package:gym_supplement_store/providers/user_provider.dart';
 import 'package:gym_supplement_store/widgets/product_card.dart';
-import 'package:gym_supplement_store/pages/screens/latest_products_screen.dart';
-import 'package:gym_supplement_store/pages/screens/deals_screen.dart';
-import 'package:gym_supplement_store/pages/screens/product_detail.dart';
+import 'package:gym_supplement_store/pages/screens/home/latest_products_screen.dart';
+import 'package:gym_supplement_store/pages/screens/home/deals_screen.dart';
+import 'package:gym_supplement_store/widgets/product_detail.dart';
+import 'package:gym_supplement_store/pages/screens/home/notifications.dart';
 
 class HomeTap extends StatefulWidget {
   const HomeTap({super.key});
@@ -17,13 +19,11 @@ class HomeTap extends StatefulWidget {
 
 class _HomeTapState extends State<HomeTap> {
   String _greeting = '';
-  String _userName = '';
 
   @override
   void initState() {
     super.initState();
     _setGreeting();
-    _getUserName();
   }
 
   @override
@@ -53,20 +53,6 @@ class _HomeTapState extends State<HomeTap> {
     }
   }
 
-  void _getUserName() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      setState(() {
-        _userName =
-            userProvider.username ??
-            user.displayName ??
-            user.email?.split('@')[0] ??
-            'User';
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -75,32 +61,35 @@ class _HomeTapState extends State<HomeTap> {
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with Greeting and Notification
-              _buildHeader(context),
+          child: Container(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with Greeting and Notification
+                _buildHeader(context),
 
-              // Promotion Banner
-              _buildPromotionBanner(context),
+                // Promotion Banner
+                _buildPromotionBanner(context),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // Latest Products Section
-              _buildLatestProductsSection(context),
+                // Latest Products Section
+                _buildLatestProductsSection(context),
 
-              const SizedBox(height: 0),
+                const SizedBox(height: 0),
 
-              // Deals Section
-              _buildDealsSection(context),
+                // Deals Section
+                _buildDealsSection(context),
 
-              const SizedBox(height: 0),
+                const SizedBox(height: 0),
 
-              // All Products Section
-              _buildAllProductsSection(context),
+                // All Products Section
+                _buildAllProductsSection(context),
 
-              const SizedBox(height: 0),
-            ],
+                const SizedBox(height: 0),
+              ],
+            ),
           ),
         ),
       ),
@@ -109,11 +98,64 @@ class _HomeTapState extends State<HomeTap> {
 
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
+    final userProvider = Provider.of<UserProvider>(context);
+    final avatarUrl = userProvider.avatarUrl;
 
     return Container(
+      width: double.infinity, // Ensures Row gets a bounded width
       padding: const EdgeInsets.all(20),
       child: Row(
         children: [
+          // Profile image with border and overlay border
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Outer overlay border
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: theme.colorScheme.secondary.withOpacity(0.5),
+                    width: 4,
+                  ),
+                ),
+              ),
+              // Inner border
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: theme.colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                child: ClipOval(
+                  child: avatarUrl != null && avatarUrl.isNotEmpty
+                      ? Image.network(
+                          avatarUrl,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.person,
+                            size: 32,
+                            color: theme.colorScheme.primary,
+                          ),
+                        )
+                      : Icon(
+                          Icons.person,
+                          size: 32,
+                          color: theme.colorScheme.primary,
+                        ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +169,7 @@ class _HomeTapState extends State<HomeTap> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _userName,
+                  userProvider.username ?? 'Username...',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurface,
@@ -143,9 +185,8 @@ class _HomeTapState extends State<HomeTap> {
             ),
             child: IconButton(
               onPressed: () {
-                // TODO: Navigate to notifications
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Notifications coming soon!')),
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => NotificationsScreen()),
                 );
               },
               icon: Stack(
@@ -326,10 +367,11 @@ class _HomeTapState extends State<HomeTap> {
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: theme.colorScheme.primary,
-                  ),
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: 4,
+                  itemBuilder: (_, __) => const ShimmerProductCard(),
                 );
               }
 
@@ -450,10 +492,11 @@ class _HomeTapState extends State<HomeTap> {
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: theme.colorScheme.primary,
-                  ),
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: 4,
+                  itemBuilder: (_, __) => const ShimmerProductCard(),
                 );
               }
 
@@ -547,10 +590,18 @@ class _HomeTapState extends State<HomeTap> {
           stream: FirebaseFirestore.instance.collection('products').snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(
-                  color: theme.colorScheme.primary,
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.75,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
                 ),
+                itemCount: 6,
+                itemBuilder: (_, __) => const ShimmerProductCard(),
               );
             }
 

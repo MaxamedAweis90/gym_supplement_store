@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:gym_supplement_store/pages/screens/cart.dart';
-import 'package:gym_supplement_store/pages/screens/home.dart';
-import 'package:gym_supplement_store/pages/screens/favorite.dart';
-import 'package:gym_supplement_store/pages/screens/profile.dart';
+import 'package:gym_supplement_store/pages/screens/cart/cart.dart';
+import 'package:gym_supplement_store/pages/screens/home/home.dart';
+import 'package:gym_supplement_store/pages/screens/favorite/favorite.dart';
+import 'package:gym_supplement_store/pages/screens/profile/profile.dart';
 
 class Bottomnav extends StatefulWidget {
   const Bottomnav({super.key});
@@ -13,24 +13,24 @@ class Bottomnav extends StatefulWidget {
 }
 
 class _BottomnavState extends State<Bottomnav> {
-  late List<Widget> pages;
-
-  late HomeTap hometap;
-  late FavoriteTap favoritetap;
-  late CartTap carttap;
-  late ProfileTap profiletap;
-
   int currentTabIndex = 0;
 
-  @override
-  void initState() {
-    hometap = HomeTap();
-    favoritetap = FavoriteTap();
-    carttap = CartTap();
-    profiletap = ProfileTap();
-    pages = [hometap, favoritetap, carttap, profiletap];
-    super.initState();
-  }
+  // List of pages to be displayed in the BottomNav.
+  // They are instantiated once and their state will be preserved.
+  final List<Widget> _pages = [
+    HomeTap(),
+    FavoriteTap(),
+    CartTap(),
+    ProfileTap(),
+  ];
+
+  // Data for the navigation bar items for cleaner code.
+  final List<({String label, IconData icon})> _navItems = [
+    (label: 'Home', icon: Icons.home_outlined),
+    (label: 'Favorites', icon: Icons.favorite_outline),
+    (label: 'Cart', icon: Icons.shopping_cart_outlined),
+    (label: 'Profile', icon: Icons.person_outlined),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +38,8 @@ class _BottomnavState extends State<Bottomnav> {
 
     return SafeArea(
       child: Scaffold(
-        extendBody: true, // For shadow and floating effect
-        body: pages[currentTabIndex],
+        extendBody: true,
+        body: IndexedStack(index: currentTabIndex, children: _pages),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             boxShadow: [
@@ -65,48 +65,20 @@ class _BottomnavState extends State<Bottomnav> {
                 currentTabIndex = index;
               });
             },
-            items: [
-              Tooltip(
-                message: 'Home',
+            items: List.generate(_navItems.length, (index) {
+              final item = _navItems[index];
+              final isSelected = currentTabIndex == index;
+              return Tooltip(
+                message: item.label,
                 child: Icon(
-                  Icons.home_outlined,
-                  color: currentTabIndex == 0
+                  item.icon,
+                  color: isSelected
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurface,
                   size: 30.0,
                 ),
-              ),
-              Tooltip(
-                message: 'Favorites',
-                child: Icon(
-                  Icons.favorite_outline,
-                  color: currentTabIndex == 1
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface,
-                  size: 30.0,
-                ),
-              ),
-              Tooltip(
-                message: 'Cart',
-                child: Icon(
-                  Icons.shopping_cart_outlined,
-                  color: currentTabIndex == 2
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface,
-                  size: 30.0,
-                ),
-              ),
-              Tooltip(
-                message: 'Profile',
-                child: Icon(
-                  Icons.person_outlined,
-                  color: currentTabIndex == 3
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface,
-                  size: 30.0,
-                ),
-              ),
-            ],
+              );
+            }),
           ),
         ),
       ),

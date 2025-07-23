@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:gym_supplement_store/providers/theme_provider.dart';
 import 'package:gym_supplement_store/providers/user_provider.dart';
 import 'package:gym_supplement_store/auth/login.dart';
 import 'package:gym_supplement_store/widgets/user_avatar_picker.dart';
-import 'package:gym_supplement_store/main.dart';
 import 'package:gym_supplement_store/widgets/splash_screen.dart';
+import 'package:gym_supplement_store/pages/screens/profile/my_orders.dart';
 
 class ProfileTap extends StatefulWidget {
   const ProfileTap({super.key});
@@ -18,6 +17,17 @@ class ProfileTap extends StatefulWidget {
 
 class _ProfileTapState extends State<ProfileTap> {
   @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Provider.of<UserProvider>(context, listen: false).initializeUserData();
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final theme = Theme.of(context);
@@ -26,13 +36,6 @@ class _ProfileTapState extends State<ProfileTap> {
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text('No user found')));
-    }
-
-    // Initialize user data if not already loaded
-    if (userProvider.userData == null && !userProvider.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        userProvider.initializeUserData();
-      });
     }
 
     // Show loading indicator if data is being loaded
@@ -90,18 +93,201 @@ class _ProfileTapState extends State<ProfileTap> {
                         const SizedBox(height: 20),
 
                         // Profile Image Section
-                        UserAvatarPicker(
-                          key: ValueKey(userProvider.avatarUrl),
-                          initialImageUrl: userProvider.avatarUrl,
-                          userId: user.uid,
-                          size: 120,
-                          onImageChanged: (String? newAvatarUrl) async {
-                            await userProvider.updateAvatarUrl(newAvatarUrl);
+                        Builder(
+                          builder: (context) {
+                            final avatarKey =
+                                GlobalKey<UserAvatarPickerState>();
+                            return SizedBox(
+                              width: 150, // Increased to allow floating button
+                              height: 150,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: Container(
+                                      width: 130,
+                                      height: 130,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: theme.colorScheme.primary,
+                                          width: 4,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.15,
+                                            ),
+                                            blurRadius: 12,
+                                            offset: Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipOval(
+                                        child: UserAvatarPicker(
+                                          key: avatarKey,
+                                          initialImageUrl:
+                                              userProvider.avatarUrl,
+                                          userId: user.uid,
+                                          size: 120,
+                                          showEditButton:
+                                              false, // Hide internal button
+                                          showDeleteButton: false,
+                                          onImageChanged:
+                                              (String? newAvatarUrl) async {
+                                                await userProvider
+                                                    .updateAvatarUrl(
+                                                      newAvatarUrl,
+                                                    );
+                                              },
+                                          onEditPressed: () async {}, // No-op
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Floating edit button
+                                  Positioned(
+                                    bottom: -10,
+                                    right: 10,
+                                    child: GestureDetector(
+                                      onTap: () async {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          shape: const RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.vertical(
+                                              top: Radius.circular(24),
+                                            ),
+                                          ),
+                                          builder: (context) {
+                                            return SafeArea(
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 24,
+                                                      horizontal: 16,
+                                                    ),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons.edit_rounded,
+                                                      ),
+                                                      title: const Text(
+                                                        'Update Image',
+                                                      ),
+                                                      onTap: () {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                        (avatarKey.currentState
+                                                                as UserAvatarPickerState)
+                                                            .pickImage();
+                                                      },
+                                                    ),
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons.delete_outline,
+                                                        color: Colors.red,
+                                                      ),
+                                                      title: const Text(
+                                                        'Delete Image',
+                                                        style: TextStyle(
+                                                          color: Colors.red,
+                                                        ),
+                                                      ),
+                                                      onTap: () async {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                        final confirm = await showDialog<bool>(
+                                                          context: context,
+                                                          builder: (context) => AlertDialog(
+                                                            title: const Text(
+                                                              'Delete Profile Image',
+                                                            ),
+                                                            content: const Text(
+                                                              'Are you sure you want to delete your profile image?',
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    Navigator.of(
+                                                                      context,
+                                                                    ).pop(
+                                                                      false,
+                                                                    ),
+                                                                child:
+                                                                    const Text(
+                                                                      'Cancel',
+                                                                    ),
+                                                              ),
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    Navigator.of(
+                                                                      context,
+                                                                    ).pop(true),
+                                                                child: const Text(
+                                                                  'Delete',
+                                                                  style: TextStyle(
+                                                                    color: Colors
+                                                                        .red,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                        if (confirm == true) {
+                                                          (avatarKey.currentState
+                                                                  as UserAvatarPickerState)
+                                                              .removeImage();
+                                                        }
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.primary,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: theme.colorScheme.surface,
+                                            width: 3,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.18,
+                                              ),
+                                              blurRadius: 8,
+                                              offset: Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Icon(
+                                          Icons.edit_rounded,
+                                          color: theme.colorScheme.onPrimary,
+                                          size: 22,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
                           },
                         ),
-
                         const SizedBox(height: 20),
-
                         // User Info
                         Consumer<UserProvider>(
                           builder: (context, userProvider, child) {
@@ -172,7 +358,7 @@ class _ProfileTapState extends State<ProfileTap> {
                             child: _buildStatItem(
                               context,
                               'Orders',
-                              '12',
+                              userProvider.orderCount?.toString() ?? '0',
                               Icons.shopping_bag_outlined,
                               theme.colorScheme.primary,
                             ),
@@ -186,25 +372,25 @@ class _ProfileTapState extends State<ProfileTap> {
                             child: _buildStatItem(
                               context,
                               'Favorites',
-                              '8',
+                              userProvider.favoriteCount?.toString() ?? '0',
                               Icons.favorite_outline,
                               theme.colorScheme.secondary,
                             ),
                           ),
-                          Container(
-                            width: 1,
-                            height: 40,
-                            color: theme.colorScheme.outline.withOpacity(0.2),
-                          ),
-                          Expanded(
-                            child: _buildStatItem(
-                              context,
-                              'Reviews',
-                              '5',
-                              Icons.star_outline,
-                              theme.colorScheme.tertiary,
+                          if ((userProvider.badgeRank ?? 0) > 0) ...[
+                            Container(
+                              width: 1,
+                              height: 40,
+                              color: theme.colorScheme.outline.withOpacity(0.2),
                             ),
-                          ),
+                            Expanded(
+                              child: _buildBadgeStatItem(
+                                context,
+                                userProvider.badgeRank!,
+                                theme,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -261,6 +447,60 @@ class _ProfileTapState extends State<ProfileTap> {
     );
   }
 
+  Widget _buildBadgeStatItem(
+    BuildContext context,
+    int badgeRank,
+    ThemeData theme,
+  ) {
+    IconData icon;
+    Color color;
+    String label;
+    switch (badgeRank) {
+      case 1:
+        icon = Icons.emoji_events_rounded;
+        color = Colors.amber;
+        label = '#1 Most Ordered';
+        break;
+      case 2:
+        icon = Icons.emoji_events_rounded;
+        color = Colors.grey;
+        label = '#2 Most Ordered';
+        break;
+      case 3:
+        icon = Icons.emoji_events_rounded;
+        color = Colors.brown;
+        label = '#3 Most Ordered';
+        break;
+      default:
+        icon = Icons.emoji_events_outlined;
+        color = theme.colorScheme.outline;
+        label = '';
+    }
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 24),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+            fontSize: 15,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Badge',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSettingsSection(
     BuildContext context,
     ThemeProvider themeProvider,
@@ -303,6 +543,19 @@ class _ProfileTapState extends State<ProfileTap> {
                 Icons.palette_outlined,
                 theme.colorScheme.secondary,
                 trailing: _buildThemeModeSelector(themeProvider, theme),
+              ),
+              _buildDivider(theme),
+              _buildSettingTile(
+                context,
+                'My Orders',
+                'View your order history',
+                Icons.receipt_long_outlined,
+                theme.colorScheme.primary,
+                onTap: () {
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => MyOrdersScreen()));
+                },
               ),
               _buildDivider(theme),
               _buildSettingTile(

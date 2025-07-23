@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gym_supplement_store/widgets/product_card.dart';
-import 'package:gym_supplement_store/pages/screens/product_detail.dart';
+import 'package:gym_supplement_store/widgets/product_detail.dart';
 
 class LatestProductsScreen extends StatelessWidget {
   const LatestProductsScreen({super.key});

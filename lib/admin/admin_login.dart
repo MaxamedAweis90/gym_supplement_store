@@ -17,6 +17,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _error;
+  bool _obscurePassword = true;
 
   Future<void> _handleAdminLogin() async {
     setState(() {
@@ -47,6 +48,20 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
           final isAdmin = userData['isAdmin'] ?? false;
 
           if (isAdmin) {
+            // Ensure admin doc exists in 'admins' collection
+            final adminDocRef = FirebaseFirestore.instance
+                .collection('admins')
+                .doc(user.uid);
+            final adminDoc = await adminDocRef.get();
+            if (!adminDoc.exists) {
+              // You can add more fields if needed
+              await adminDocRef.set({
+                'createdAt': FieldValue.serverTimestamp(),
+                'email': user.email,
+                'fromUserDoc':
+                    true, // Indicates this was auto-created from user doc
+              });
+            }
             setState(() => _isLoading = false);
 
             Fluttertoast.showToast(
@@ -63,7 +78,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
               context,
               MaterialPageRoute(
                 builder: (_) => SplashScreen(
-                  duration: const Duration(seconds: 7),
+                  duration: const Duration(seconds: 4),
                   nextScreen: const AdminDashboard(),
                 ),
               ),
@@ -178,7 +193,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _passwordController,
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
                       prefixIcon: Icon(
@@ -194,9 +209,18 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
-                      suffixIcon: Icon(
-                        Icons.visibility_off_outlined,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
                       ),
                     ),
                   ),

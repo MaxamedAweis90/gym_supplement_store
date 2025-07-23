@@ -9,6 +9,9 @@ class UserAvatarPicker extends StatefulWidget {
   final Function(String? imageUrl) onImageChanged;
   final double size;
   final bool showEditButton;
+  final bool showDeleteButton;
+  final VoidCallback? onEditPressed;
+  final VoidCallback? onDeletePressed;
 
   const UserAvatarPicker({
     super.key,
@@ -17,13 +20,16 @@ class UserAvatarPicker extends StatefulWidget {
     required this.onImageChanged,
     this.size = 100,
     this.showEditButton = true,
+    this.showDeleteButton = true,
+    this.onEditPressed,
+    this.onDeletePressed,
   });
 
   @override
-  State<UserAvatarPicker> createState() => _UserAvatarPickerState();
+  State<UserAvatarPicker> createState() => UserAvatarPickerState();
 }
 
-class _UserAvatarPickerState extends State<UserAvatarPicker> {
+class UserAvatarPickerState extends State<UserAvatarPicker> {
   String? _imageUrl;
   File? _imageFile;
   bool _isUploading = false;
@@ -162,6 +168,9 @@ class _UserAvatarPickerState extends State<UserAvatarPicker> {
     }
   }
 
+  void pickImage() => _pickImage();
+  void removeImage() => _removeImage();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -177,7 +186,7 @@ class _UserAvatarPickerState extends State<UserAvatarPicker> {
               shape: BoxShape.circle,
               border: Border.all(
                 color: theme.colorScheme.primary.withOpacity(0.3),
-                width: 2,
+                width: 4, // Match profile border
               ),
               boxShadow: [
                 BoxShadow(
@@ -195,53 +204,43 @@ class _UserAvatarPickerState extends State<UserAvatarPicker> {
               ],
             ),
             child: ClipOval(
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: theme.colorScheme.surface,
-                    width: 3,
-                  ),
-                ),
-                child: _isUploading
-                    ? Container(
-                        color: theme.colorScheme.surface,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: theme.colorScheme.primary,
-                            strokeWidth: 3,
-                          ),
+              child: _isUploading
+                  ? Container(
+                      color: theme.colorScheme.surface,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: theme.colorScheme.primary,
+                          strokeWidth: 3,
                         ),
-                      )
-                    : _imageUrl != null
-                    ? Image.network(
-                        _imageUrl!,
-                        fit: BoxFit.cover,
-                        width: widget.size,
-                        height: widget.size,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: theme.colorScheme.surface,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value:
-                                    loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                    : null,
-                                color: theme.colorScheme.primary,
-                                strokeWidth: 2,
-                              ),
+                      ),
+                    )
+                  : _imageUrl != null
+                  ? Image.network(
+                      _imageUrl!,
+                      fit: BoxFit.cover,
+                      width: widget.size,
+                      height: widget.size,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: theme.colorScheme.surface,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                  : null,
+                              color: theme.colorScheme.primary,
+                              strokeWidth: 2,
                             ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildDefaultAvatar(theme);
-                        },
-                      )
-                    : _buildDefaultAvatar(theme),
-              ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildDefaultAvatar(theme);
+                      },
+                    )
+                  : _buildDefaultAvatar(theme),
             ),
           ),
 
@@ -270,7 +269,9 @@ class _UserAvatarPickerState extends State<UserAvatarPicker> {
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(20),
-                    onTap: _isUploading ? null : _pickImage,
+                    onTap:
+                        widget.onEditPressed ??
+                        (_isUploading ? null : _pickImage),
                     child: Container(
                       width: 40,
                       height: 40,
@@ -287,8 +288,10 @@ class _UserAvatarPickerState extends State<UserAvatarPicker> {
               ),
             ),
 
-          // Enhanced Remove Button
-          if (_imageUrl != null && widget.showEditButton)
+          // Remove Button (now controlled by showDeleteButton)
+          if (_imageUrl != null &&
+              widget.showEditButton &&
+              widget.showDeleteButton)
             Positioned(
               top: 2,
               right: 2,
@@ -312,7 +315,9 @@ class _UserAvatarPickerState extends State<UserAvatarPicker> {
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(15),
-                    onTap: _isUploading ? null : _removeImage,
+                    onTap:
+                        widget.onDeletePressed ??
+                        (_isUploading ? null : _removeImage),
                     child: Container(
                       width: 32,
                       height: 32,

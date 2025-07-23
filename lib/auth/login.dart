@@ -7,8 +7,8 @@ import 'package:gym_supplement_store/auth/register.dart';
 import 'package:gym_supplement_store/widgets/bottomnav.dart';
 import 'package:gym_supplement_store/admin/admin_login.dart';
 import 'package:gym_supplement_store/providers/user_provider.dart';
-import 'package:gym_supplement_store/main.dart';
 import 'package:gym_supplement_store/widgets/splash_screen.dart';
+import 'package:gym_supplement_store/auth/forgot_password.dart';
 
 class LoginPage extends StatefulWidget {
   final String? emailFromRegister;
@@ -24,6 +24,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _error;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -60,6 +61,11 @@ class _LoginPageState extends State<LoginPage> {
         context,
         listen: false,
       ).initializeUserData();
+
+      await Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).fetchUserDataOnce();
 
       setState(() => _isLoading = false);
 
@@ -109,6 +115,11 @@ class _LoginPageState extends State<LoginPage> {
         context,
         listen: false,
       ).initializeUserData();
+
+      await Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).fetchUserDataOnce();
 
       setState(() => _isLoading = false);
 
@@ -226,7 +237,7 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _passwordController,
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
                       prefixIcon: Icon(
@@ -242,28 +253,46 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
-                      suffixIcon: Icon(
-                        Icons.visibility_off_outlined,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: false,
-                        onChanged: (_) {},
-                        activeColor: theme.colorScheme.primary,
+                  const SizedBox(height: 2),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ForgotPasswordPage(
+                              initialEmail: _emailController.text,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Forgot password?',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      Text(
-                        "Remind me next time",
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ],
+                    ),
                   ),
                   if (_error != null) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 2),
                     Text(
                       _error!,
                       style: TextStyle(
@@ -301,29 +330,29 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _handleGoogleSignIn,
-                        icon: Image.asset(
-                          'assets/images/google.png',
-                          height: 24,
-                        ),
-                        label: Text(
-                          'Sign in with Google',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.surface,
-                          foregroundColor: theme.colorScheme.onSurface,
-                          side: BorderSide(
-                            color: theme.colorScheme.outline.withOpacity(0.3),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
+                    // const SizedBox(height: 16),
+                    // SizedBox(
+                    //   width: double.infinity,
+                    //   child: ElevatedButton.icon(
+                    //     onPressed: _handleGoogleSignIn,
+                    //     icon: Image.asset(
+                    //       'assets/images/google.png',
+                    //       height: 24,
+                    //     ),
+                    //     label: Text(
+                    //       'Sign in with Google',
+                    //       style: theme.textTheme.titleMedium,
+                    //     ),
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: theme.colorScheme.surface,
+                    //       foregroundColor: theme.colorScheme.onSurface,
+                    //       side: BorderSide(
+                    //         color: theme.colorScheme.outline.withOpacity(0.3),
+                    //       ),
+                    //       padding: const EdgeInsets.symmetric(vertical: 12),
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                   const SizedBox(height: 8),
                   Center(

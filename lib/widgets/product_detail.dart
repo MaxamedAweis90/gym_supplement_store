@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:gym_supplement_store/providers/user_provider.dart';
+import 'package:gym_supplement_store/providers/cart_provider.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -12,17 +13,20 @@ class ProductDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final userProvider = Provider.of<UserProvider>(context);
+    final cartProvider = Provider.of<CartProvider>(context);
     final productId = product['id'] ?? product['productId'] ?? '';
     final bool hasDiscount =
         product['discountPrice'] != null &&
         product['discountPrice'] < product['price'];
-    final bgColor = const Color.fromARGB(255, 255, 255, 255);
-    final containerColor = Colors.white;
+    final bgColor = theme.colorScheme.background;
+    final containerColor = theme.colorScheme.surface;
     final containerBorder = Border.all(
       color: theme.colorScheme.outline.withOpacity(0.08),
       width: 1.5,
     );
     final isDark = theme.brightness == Brightness.dark;
+    final inCart = cartProvider.isInCart(productId);
+    int quantity = inCart ? cartProvider.getQuantity(productId) : 1;
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -61,7 +65,7 @@ class ProductDetailScreen extends StatelessWidget {
                     width: containerWidth,
                     height: containerHeight,
                     decoration: BoxDecoration(
-                      color: containerColor,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       border: containerBorder,
                       boxShadow: [
@@ -166,13 +170,13 @@ class ProductDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                _buildColorCircle(Colors.black),
+                _buildColorCircle(context, Colors.black),
                 const SizedBox(width: 8),
-                _buildColorCircle(Colors.amber[100]!),
+                _buildColorCircle(context, Colors.amber[100]!),
                 const SizedBox(width: 8),
-                _buildColorCircle(Colors.grey[400]!),
+                _buildColorCircle(context, Colors.grey[400]!),
                 const SizedBox(width: 8),
-                _buildColorCircle(Colors.orange[100]!),
+                _buildColorCircle(context, Colors.orange[100]!),
               ],
             ),
             const SizedBox(height: 18),
@@ -187,34 +191,95 @@ class ProductDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: theme.colorScheme.outline),
               ),
               child: Text(
                 'CHOOSE SIZE',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
               ),
             ),
             const SizedBox(height: 28),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+            Row(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.colorScheme.outline),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        onPressed: quantity > 1
+                            ? () {
+                                if (inCart) {
+                                  cartProvider.decrementQuantity(productId);
+                                }
+                              }
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          '$quantity',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () {
+                          if (inCart) {
+                            cartProvider.incrementQuantity(productId);
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                onPressed: () {},
-                child: const Text(
-                  'Buy Now',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: SizedBox(
+                    height: 54,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        if (!inCart) {
+                          cartProvider.addToCart(
+                            id: productId,
+                            name: product['name'] ?? '',
+                            imageUrl: product['imageUrl'] ?? '',
+                            price: (product['price'] ?? 0.0).toDouble(),
+                            discountPrice: product['discountPrice'] != null
+                                ? (product['discountPrice'] as num).toDouble()
+                                : null,
+                            quantity: quantity,
+                          );
+                        } else {
+                          Navigator.of(context).pop();
+                          // Optionally, navigate to cart tab
+                        }
+                      },
+                      child: Text(
+                        inCart ? 'View Cart' : 'Add to Cart',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
             if (product['supplementType'] != null &&
                 product['supplementType'].toString().isNotEmpty) ...[
@@ -348,14 +413,15 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildColorCircle(Color color) {
+  Widget _buildColorCircle(BuildContext context, Color color) {
+    final theme = Theme.of(context);
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey[300]!, width: 2),
+        border: Border.all(color: theme.colorScheme.outline, width: 2),
       ),
     );
   }

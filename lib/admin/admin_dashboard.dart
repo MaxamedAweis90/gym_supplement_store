@@ -4,8 +4,11 @@ import 'package:gym_supplement_store/admin/admin_bottom_nav.dart';
 import 'package:gym_supplement_store/admin/admin_products.dart';
 import 'package:gym_supplement_store/admin/admin_settings.dart';
 import 'package:gym_supplement_store/auth/login.dart';
-import 'package:gym_supplement_store/main.dart';
 import 'package:gym_supplement_store/widgets/splash_screen.dart';
+import 'package:gym_supplement_store/admin/admin_orders.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gym_supplement_store/admin/admin_archive_orders.dart';
+import 'package:gym_supplement_store/admin/manage_users_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -23,20 +26,60 @@ class _AdminDashboardState extends State<AdminDashboard> {
     const AdminSettingsPage(),
   ];
 
+  Future<bool> _onWillPop() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text(
+          'You are about to log out from the admin dashboard. Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+    if (shouldLogout == true) {
+      await FirebaseAuth.instance.signOut();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SplashScreen(
+            duration: const Duration(seconds: 2),
+            nextScreen: const LoginPage(),
+          ),
+        ),
+        (route) => false,
+      );
+      return false;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: _adminPages[_currentIndex],
-      bottomNavigationBar: AdminBottomNav(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: _adminPages[_currentIndex],
+        bottomNavigationBar: AdminBottomNav(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+        ),
       ),
     );
   }
@@ -45,6 +88,38 @@ class _AdminDashboardState extends State<AdminDashboard> {
 // Admin Home Tab
 class AdminHomeTab extends StatelessWidget {
   const AdminHomeTab({super.key});
+
+  Future<int> _getTotalProducts() async {
+    final snap = await FirebaseFirestore.instance.collection('products').get();
+    return snap.size;
+  }
+
+  Future<int> _getTotalOrders() async {
+    final snap = await FirebaseFirestore.instance
+        .collection('orders')
+        .where('status', isNotEqualTo: 'delivered')
+        .get();
+    return snap.size;
+  }
+
+  Future<double> _getRevenue() async {
+    final snap = await FirebaseFirestore.instance
+        .collection('archive_orders')
+        .get();
+    double total = 0.0;
+    for (var doc in snap.docs) {
+      final data = doc.data();
+      if (data.containsKey('total')) {
+        total += (data['total'] as num).toDouble();
+      }
+    }
+    return total;
+  }
+
+  Future<int> _getTotalUsers() async {
+    final snap = await FirebaseFirestore.instance.collection('users').get();
+    return snap.size;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,25 +137,7 @@ class AdminHomeTab extends StatelessWidget {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout, color: theme.colorScheme.onSurface),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              // Show splash screen before navigating to login
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SplashScreen(
-                    duration: const Duration(seconds: 2),
-                    nextScreen: const LoginPage(),
-                  ),
-                ),
-                (route) => false,
-              );
-            },
-          ),
-        ],
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -149,22 +206,28 @@ class AdminHomeTab extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Total Products',
-                    '24',
-                    Icons.inventory,
-                    theme.colorScheme.primary,
+                  child: FutureBuilder<int>(
+                    future: _getTotalProducts(),
+                    builder: (context, snapshot) => _buildStatCard(
+                      context,
+                      'Total Products',
+                      snapshot.hasData ? snapshot.data.toString() : '...',
+                      Icons.inventory,
+                      theme.colorScheme.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Orders Today',
-                    '12',
-                    Icons.shopping_cart,
-                    theme.colorScheme.secondary,
+                  child: FutureBuilder<int>(
+                    future: _getTotalOrders(),
+                    builder: (context, snapshot) => _buildStatCard(
+                      context,
+                      'Total Orders',
+                      snapshot.hasData ? snapshot.data.toString() : '...',
+                      Icons.shopping_cart,
+                      theme.colorScheme.secondary,
+                    ),
                   ),
                 ),
               ],
@@ -175,22 +238,30 @@ class AdminHomeTab extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Revenue',
-                    '\$2,450',
-                    Icons.attach_money,
-                    theme.colorScheme.tertiary,
+                  child: FutureBuilder<double>(
+                    future: _getRevenue(),
+                    builder: (context, snapshot) => _buildStatCard(
+                      context,
+                      'Revenue',
+                      snapshot.hasData
+                          ? '\$${snapshot.data!.toStringAsFixed(2)}'
+                          : '...',
+                      Icons.attach_money,
+                      theme.colorScheme.tertiary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Users',
-                    '156',
-                    Icons.people,
-                    theme.colorScheme.error,
+                  child: FutureBuilder<int>(
+                    future: _getTotalUsers(),
+                    builder: (context, snapshot) => _buildStatCard(
+                      context,
+                      'Users',
+                      snapshot.hasData ? snapshot.data.toString() : '...',
+                      Icons.people,
+                      theme.colorScheme.error,
+                    ),
                   ),
                 ),
               ],
@@ -209,25 +280,14 @@ class AdminHomeTab extends StatelessWidget {
 
             _buildQuickActionCard(
               context,
-              'Add New Product',
-              'Create and manage new products',
-              Icons.add_box,
-              theme.colorScheme.primary,
-              () {
-                // Navigate to add product
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            _buildQuickActionCard(
-              context,
               'View Orders',
               'Check and manage customer orders',
               Icons.receipt_long,
               theme.colorScheme.secondary,
               () {
-                // Navigate to orders
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => AdminOrdersScreen()));
               },
             ),
 
@@ -240,7 +300,24 @@ class AdminHomeTab extends StatelessWidget {
               Icons.people_outline,
               theme.colorScheme.tertiary,
               () {
-                // Navigate to user management
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => ManageUsersScreen()));
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildQuickActionCard(
+              context,
+              'View Archive',
+              'See all delivered (archived) orders',
+              Icons.archive,
+              theme.colorScheme.tertiary,
+              () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => AdminArchiveOrdersScreen()),
+                );
               },
             ),
           ],

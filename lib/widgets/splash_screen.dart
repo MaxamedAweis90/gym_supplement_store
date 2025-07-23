@@ -22,13 +22,15 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(widget.duration, () {
-      if (mounted) {
-        Navigator.of(
-          context,
-        ).pushReplacement(MaterialPageRoute(builder: (_) => widget.nextScreen));
-      }
-    });
+    if (widget.duration > Duration.zero) {
+      Future.delayed(widget.duration, () {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => widget.nextScreen),
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -42,7 +44,12 @@ class _SplashScreenState extends State<SplashScreen> {
         fit: StackFit.expand,
         children: [
           // Background image
-          Image.asset('assets/images/strongguy.png', fit: BoxFit.cover),
+          Image.asset(
+            'assets/images/strongguy.png',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+                Container(color: Colors.grey),
+          ),
           // Gradient overlay
           Container(
             decoration: BoxDecoration(
@@ -88,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 24.0),
                     child: Text(
-                      'This app is created by Engaweis and Eng Kaafi',
+                      'This app is created by @engaweis and @engKaafi',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.85),
                         fontSize: 13,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gym_supplement_store/auth/login.dart';
-import 'package:gym_supplement_store/main.dart';
+import 'package:gym_supplement_store/widgets/splash_screen.dart';
 
 class AdminSettingsPage extends StatefulWidget {
   const AdminSettingsPage({super.key});
@@ -99,6 +99,7 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: _isLoading
           ? Center(
@@ -111,147 +112,41 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Store Information
+                  // Store Information (read-only)
                   _buildSectionCard(context, 'Store Information', [
-                    _buildSettingTile(
+                    _buildReadOnlyTile(
                       context,
                       'Store Name',
                       _storeSettings['storeName'] ?? 'Gym Supplement Store',
                       Icons.store,
                       theme.colorScheme.primary,
-                      (value) => _updateStoreSettings({'storeName': value}),
                     ),
-                    _buildSettingTile(
+                    _buildReadOnlyTile(
                       context,
                       'Store Email',
                       _storeSettings['storeEmail'] ?? 'contact@store.com',
                       Icons.email,
                       theme.colorScheme.secondary,
-                      (value) => _updateStoreSettings({'storeEmail': value}),
                     ),
-                    _buildSettingTile(
+                    _buildReadOnlyTile(
                       context,
                       'Store Phone',
                       _storeSettings['storePhone'] ?? '+1 234 567 8900',
                       Icons.phone,
                       theme.colorScheme.tertiary,
-                      (value) => _updateStoreSettings({'storePhone': value}),
                     ),
                   ]),
 
                   const SizedBox(height: 24),
 
-                  // Security Settings
-                  _buildSectionCard(context, 'Security', [
-                    _buildSwitchTile(
-                      context,
-                      'Two-Factor Authentication',
-                      'Require 2FA for admin access',
-                      Icons.security,
-                      theme.colorScheme.error,
-                      _storeSettings['require2FA'] ?? false,
-                      (value) => _updateStoreSettings({'require2FA': value}),
-                    ),
-                    _buildSwitchTile(
-                      context,
-                      'Session Timeout',
-                      'Auto-logout after inactivity',
-                      Icons.timer,
-                      theme.colorScheme.tertiary,
-                      _storeSettings['sessionTimeout'] ?? true,
-                      (value) =>
-                          _updateStoreSettings({'sessionTimeout': value}),
-                    ),
-                  ]),
-
-                  const SizedBox(height: 24),
-
-                  // Notification Settings
+                  // Notifications (Order Notifications only, coming soon)
                   _buildSectionCard(context, 'Notifications', [
-                    _buildSwitchTile(
+                    _buildComingSoonSwitchTile(
                       context,
                       'Order Notifications',
                       'Get notified for new orders',
                       Icons.notifications,
                       theme.colorScheme.primary,
-                      _storeSettings['orderNotifications'] ?? true,
-                      (value) =>
-                          _updateStoreSettings({'orderNotifications': value}),
-                    ),
-                    _buildSwitchTile(
-                      context,
-                      'Low Stock Alerts',
-                      'Get notified for low stock items',
-                      Icons.inventory,
-                      theme.colorScheme.secondary,
-                      _storeSettings['lowStockAlerts'] ?? true,
-                      (value) =>
-                          _updateStoreSettings({'lowStockAlerts': value}),
-                    ),
-                  ]),
-
-                  const SizedBox(height: 24),
-
-                  // Data Management
-                  _buildSectionCard(context, 'Data Management', [
-                    ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.backup,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      title: Text(
-                        'Backup Data',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      subtitle: Text(
-                        'Create a backup of all data',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      trailing: Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: theme.iconTheme.color,
-                      ),
-                      onTap: () {
-                        _showBackupDialog(context);
-                      },
-                    ),
-                    Divider(height: 1, color: theme.dividerColor),
-                    ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.secondary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.restore,
-                          color: theme.colorScheme.secondary,
-                        ),
-                      ),
-                      title: Text(
-                        'Restore Data',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      subtitle: Text(
-                        'Restore from backup',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      trailing: Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: theme.iconTheme.color,
-                      ),
-                      onTap: () {
-                        _showRestoreDialog(context);
-                      },
                     ),
                   ]),
 
@@ -298,6 +193,16 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         await FirebaseAuth.instance.signOut();
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SplashScreen(
+                              duration: const Duration(seconds: 2),
+                              nextScreen: const LoginPage(),
+                            ),
+                          ),
+                          (route) => false,
+                        );
                       },
                       icon: const Icon(Icons.logout),
                       label: const Text('Logout'),
@@ -339,16 +244,14 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
     );
   }
 
-  Widget _buildSettingTile(
+  Widget _buildReadOnlyTile(
     BuildContext context,
     String title,
     String value,
     IconData icon,
     Color color,
-    Function(String) onUpdate,
   ) {
     final theme = Theme.of(context);
-
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -360,24 +263,18 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
       ),
       title: Text(title, style: theme.textTheme.titleLarge),
       subtitle: Text(value, style: theme.textTheme.bodyMedium),
-      trailing: Icon(Icons.edit, size: 16, color: theme.iconTheme.color),
-      onTap: () {
-        _showEditSettingDialog(context, title, value, onUpdate);
-      },
+      trailing: const Icon(Icons.lock, size: 16, color: Colors.grey),
     );
   }
 
-  Widget _buildSwitchTile(
+  Widget _buildComingSoonSwitchTile(
     BuildContext context,
     String title,
     String subtitle,
     IconData icon,
     Color color,
-    bool value,
-    Function(bool) onChanged,
   ) {
     final theme = Theme.of(context);
-
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -388,48 +285,14 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
         child: Icon(icon, color: color),
       ),
       title: Text(title, style: theme.textTheme.titleLarge),
-      subtitle: Text(subtitle, style: theme.textTheme.bodyMedium),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        activeColor: theme.colorScheme.primary,
+      subtitle: Text(
+        '$subtitle (Coming Soon)',
+        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
       ),
-    );
-  }
-
-  void _showEditSettingDialog(
-    BuildContext context,
-    String title,
-    String currentValue,
-    Function(String) onUpdate,
-  ) {
-    final controller = TextEditingController(text: currentValue);
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Edit $title', style: theme.textTheme.headlineSmall),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: title,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              onUpdate(controller.text.trim());
-              Navigator.of(context).pop();
-            },
-            child: const Text('Save'),
-          ),
-        ],
+      trailing: Switch(
+        value: false,
+        onChanged: null,
+        activeColor: theme.colorScheme.primary,
       ),
     );
   }
@@ -524,64 +387,6 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
               }
             },
             child: const Text('Change Password'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showBackupDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Backup Data'),
-        content: const Text(
-          'This will create a backup of all your data. Continue?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Backup feature coming soon'),
-                  backgroundColor: Colors.blue,
-                ),
-              );
-            },
-            child: const Text('Backup'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRestoreDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Restore Data'),
-        content: const Text('This will restore data from backup. Continue?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Restore feature coming soon'),
-                  backgroundColor: Colors.blue,
-                ),
-              );
-            },
-            child: const Text('Restore'),
           ),
         ],
       ),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../providers/user_provider.dart';
-import '../../widgets/product_card.dart';
-import 'product_detail.dart';
+import '../../../providers/user_provider.dart';
+import '../../../widgets/product_card.dart';
+import '../../../widgets/product_detail.dart';
 
 class FavoriteTap extends StatelessWidget {
   const FavoriteTap({super.key});

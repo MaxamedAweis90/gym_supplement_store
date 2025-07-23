@@ -7,7 +7,7 @@ class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key});
 
   @override
-  State<AdminProductsPage> createState() => _AdminProductsPageState();
+  _AdminProductsPageState createState() => _AdminProductsPageState();
 }
 
 class _AdminProductsPageState extends State<AdminProductsPage> {
@@ -94,6 +94,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: theme.colorScheme.onSurface),

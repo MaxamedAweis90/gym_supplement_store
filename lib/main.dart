@@ -6,11 +6,14 @@ import 'firebase_options.dart';
 import 'package:gym_supplement_store/pages/start.dart';
 import 'package:gym_supplement_store/providers/theme_provider.dart';
 import 'package:gym_supplement_store/providers/user_provider.dart';
+import 'package:gym_supplement_store/providers/cart_provider.dart';
 import 'package:gym_supplement_store/service/supabase_config.dart';
+import 'widgets/splash_screen.dart';
 import 'widgets/bottomnav.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
+  debugPrint("Icon path: assets/logo.png"); // Verify path
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await SupabaseConfig.initialize();
@@ -26,6 +29,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -35,7 +39,7 @@ class MyApp extends StatelessWidget {
             theme: _buildLightTheme(),
             darkTheme: _buildDarkTheme(),
             themeMode: themeProvider.themeMode,
-            home: const AuthWrapper(),
+            home: const SplashGate(),
           );
         },
       ),
@@ -295,6 +299,24 @@ class MyApp extends StatelessWidget {
 
       // Icon Theme
       iconTheme: const IconThemeData(color: Colors.white, size: 24),
+    );
+  }
+}
+
+/// SplashGate: Always shows splash, then routes to AuthWrapper
+class SplashGate extends StatefulWidget {
+  const SplashGate({Key? key}) : super(key: key);
+
+  @override
+  State<SplashGate> createState() => _SplashGateState();
+}
+
+class _SplashGateState extends State<SplashGate> {
+  @override
+  Widget build(BuildContext context) {
+    return SplashScreen(
+      duration: const Duration(seconds: 2),
+      nextScreen: const AuthWrapper(),
     );
   }
 }
